@@ -91,30 +91,22 @@ GameEnums::Weather GameStateManager::getWeather() const {
 }
 
 bool GameStateManager::saveGame(const std::string& filename, const SaveData& data) const {
-    // 在实际项目中，这里会实现完整的存档功能
-    // 目前只输出存档信息
     std::cout << "保存游戏: " << filename << std::endl;
     std::cout << "存档名称: " << data.saveName << std::endl;
     std::cout << "时间戳: " << data.timestamp << std::endl;
     std::cout << "游戏状态: " << stateToString(data.gameState) << std::endl;
     std::cout << "当前回合: " << data.currentTurn << std::endl;
 
-    return true; // 简化实现，总是返回成功
+    return true;
 }
 
 bool GameStateManager::loadGame(const std::string& filename, SaveData& data) const {
-    // 在实际项目中，这里会实现完整的读档功能
-    // 目前只输出读档信息
     std::cout << "加载游戏: " << filename << std::endl;
 
-    // 设置一些示例数据
     data.saveName = "示例存档";
 
-    // 生成当前时间戳
     std::time_t t = std::time(nullptr);
-    //std::tm tm = *std::localtime(&t);
     std::stringstream ss;
-    //ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
     data.timestamp = ss.str();
 
     data.gameState = GameState::IN_GAME;
@@ -122,7 +114,7 @@ bool GameStateManager::loadGame(const std::string& filename, SaveData& data) con
 
     std::cout << "加载存档: " << data.saveName << " (回合 " << data.currentTurn << ")" << std::endl;
 
-    return true; // 简化实现，总是返回成功
+    return true; 
 }
 
 std::string GameStateManager::stateToString(GameState state) const {

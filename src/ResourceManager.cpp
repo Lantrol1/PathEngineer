@@ -196,24 +196,11 @@ void ResourceManager::processTurn() {
 }
 
 void ResourceManager::endTurn() {
-    // 释放所有劳动力（任务完成的会在ConstructionSystem中释放，这里释放未完成的）
-/*  int workersFreed = 0;
-    for (const auto& assignment : currentState.workerAssignments) {
-        workersFreed += assignment.second;
-    }
-
-    if (workersFreed > 0) {
-        freeWorkers(workersFreed);
-        currentState.workerAssignments.clear();
-    }
-*/
     currentState.currentTurn++;
-
     // 检查游戏是否结束
     if (isGameOver()) {
         std::cout << "游戏结束!" << std::endl;
     }
-
     // 触发回合回调
     onTurnChange(currentState.currentTurn);
 }

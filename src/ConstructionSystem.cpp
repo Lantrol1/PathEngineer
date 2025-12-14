@@ -192,29 +192,7 @@ void ConstructionSystem::processTurn() {
     // 处理每个任务的进度
     for (auto it = activeTasks.begin(); it != activeTasks.end(); ) {
         ConstructionTask& task = **it;
-
-        if (task.isCompleted) {
-            // 任务已完成，执行建设操作
-            executeConstruction(task);
-
-            // 释放工人
-            if (task.assignedWorkers > 0) {
-                resourceManager->freeWorkersFromLocation(task.x, task.y);
-            }
-
-            // 触发完成回调
-            onTaskCompleted(task);
-
-            // 从查找表中移除
-            taskLookup.erase({ task.x, task.y });
-
-            // 从活动任务列表中移除
-            it = activeTasks.erase(it);
-
-            std::cout << "完成建设: " << task.description
-                << " 在位置 (" << task.x << ", " << task.y << ")" << std::endl;
-        }
-        else {
+        if (!task.isCompleted) {
             // 处理任务进度
             if (task.assignedWorkers > 0) {
                 int workPoints = task.assignedWorkers; // 每个工人贡献1个工作点
@@ -247,9 +225,31 @@ void ConstructionSystem::processTurn() {
                     // 例如：randomEvent->checkConstructionSafety(task.x, task.y, task.assignedWorkers);
                 }
             }
-
-            ++it;
         }
+        //task = **it;
+        if (task.isCompleted) {
+            // 任务已完成，执行建设操作
+            executeConstruction(task);
+
+            // 释放工人
+            if (task.assignedWorkers > 0) {
+                resourceManager->freeWorkersFromLocation(task.x, task.y);
+            }
+
+            // 触发完成回调
+            onTaskCompleted(task);
+
+            // 从查找表中移除
+            taskLookup.erase({ task.x, task.y });
+
+            // 从活动任务列表中移除
+            it = activeTasks.erase(it);
+
+            /*std::cout << "完成建设: " << task.description
+                << " 在位置 (" << task.x << ", " << task.y << ")" << std::endl;*/
+            continue;
+        }
+        ++it;
     }
 }
 

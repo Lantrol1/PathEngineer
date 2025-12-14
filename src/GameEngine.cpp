@@ -238,6 +238,7 @@ void GameEngine::handleInput(const sf::Event& event) {
 
         case sf::Keyboard::Enter:
             if (currentState == GameState::DEPLOYMENT) {
+                std::cout << "Start!!" << std::endl;
                 startTurn();
                 //if (currentState == GameState::TURN_END) {
                 //endTurn();
@@ -308,7 +309,7 @@ void GameEngine::update(float deltaTime) {
 
     case GameState::TURN_PROCESSING:
         // 回合处理中逻辑
-        processTurn();
+        //processTurn();
         break;
 
     case GameState::TURN_END:
@@ -434,6 +435,7 @@ void GameEngine::startTurn() {
     // 开始回合处理
     resourceManager->startTurn();
     randomEvent->processTurn();
+    GameEngine::processTurn();
 }
 
 void GameEngine::processTurn() {
@@ -473,7 +475,8 @@ void GameEngine::endTurn() {
     currentTurn++;
 
     // 进入下一回合的部署阶段
-    currentState = GameState::DEPLOYMENT;
+    if(currentState!=GameState::GAME_OVER)
+        currentState = GameState::DEPLOYMENT;
 
     std::cout << "回合 " << currentTurn - 1 << " 结束，进入回合 " << currentTurn << " 部署阶段" << std::endl;
     std::cout << "剩余回合: " << (maxTurns - currentTurn) << std::endl;
