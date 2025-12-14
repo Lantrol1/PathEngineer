@@ -57,7 +57,8 @@ private:
     void drawCell(sf::RenderWindow& window, int x, int y, const Cell& cell);
     void drawTerrain(sf::RenderWindow& window, int x, int y, const Cell& cell);
     void drawObstacles(sf::RenderWindow& window, int x, int y, const Cell& cell);
-    void drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell);
+    void drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell) const;
+    //void drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell);
     void drawConstruction(sf::RenderWindow& window, int x, int y, const Cell& cell);
     void drawOverlay(sf::RenderWindow& window, int x, int y, const Cell& cell);
 

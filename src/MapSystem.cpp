@@ -24,7 +24,8 @@ void MapSystem::initialize() {
     // 标记起点和终点
     getCell(startPoint.x, startPoint.y).isStartPoint = true;
     getCell(endPoint.x, endPoint.y).isEndPoint = true;
-
+    std::cout << startPoint.x << " " << startPoint.y << std::endl;
+    std::cout << endPoint.x << " " << endPoint.y << std::endl;
     // 设置一些基础地形
     for (int y = 0; y < Constants::MAP_HEIGHT; ++y) {
         for (int x = 0; x < Constants::MAP_WIDTH; ++x) {

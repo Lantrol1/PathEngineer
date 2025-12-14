@@ -44,7 +44,7 @@ namespace Constants {
 
     // 资源常量
     const int INITIAL_BUDGET = 10000;
-    const int INITIAL_WORKERS = 10;
+    const int INITIAL_WORKERS = 100;
     const int MAX_TURNS = 50;
 
     // 建设成本

@@ -96,7 +96,7 @@ void GameEngine::setupCallbacks() {
 
         // 检查是否完成路径
         if (constructionSystem->isPathComplete()) {
-            endGame(true, "成功连接起点和终点！");
+            endGame(true, "Complete!");
         }
         });
 
@@ -239,9 +239,9 @@ void GameEngine::handleInput(const sf::Event& event) {
         case sf::Keyboard::Enter:
             if (currentState == GameState::DEPLOYMENT) {
                 startTurn();
-            }
-            else if (currentState == GameState::TURN_END) {
-                endTurn();
+                //if (currentState == GameState::TURN_END) {
+                //endTurn();
+                //}
             }
             break;
 
@@ -340,7 +340,7 @@ void GameEngine::render() {
     case GameState::PAUSED:
         // 渲染暂停菜单
     {
-        sf::Text pauseText("游戏暂停 - 按P继续", Rrender->Render::Getfont(), 24);
+        sf::Text pauseText("Paused - press P to continue.", Rrender->Render::Getfont(), 24);
         pauseText.setPosition(Constants::WINDOW_WIDTH / 2 - 100, Constants::WINDOW_HEIGHT / 2);
         pauseText.setFillColor(sf::Color::White);
         window.draw(pauseText);
@@ -354,7 +354,7 @@ void GameEngine::render() {
         overlay.setFillColor(sf::Color(0, 0, 0, 180));
         window.draw(overlay);
 
-        sf::Text gameOverText(gameWon ? "游戏胜利！" : "游戏结束", Rrender->Getfont(), 36);
+        sf::Text gameOverText(gameWon ? "Game Won!" : "Game Over!", Rrender->Getfont(), 36);
         gameOverText.setPosition(Constants::WINDOW_WIDTH / 2 - 100, Constants::WINDOW_HEIGHT / 2 - 50);
         gameOverText.setFillColor(gameWon ? sf::Color::Green : sf::Color::Red);
         window.draw(gameOverText);
@@ -364,7 +364,7 @@ void GameEngine::render() {
         resultText.setFillColor(sf::Color::White);
         window.draw(resultText);
 
-        sf::Text restartText("按ESC退出游戏", Rrender->Render::Getfont(), 18);
+        sf::Text restartText("ESC", Rrender->Render::Getfont(), 18);
         restartText.setPosition(Constants::WINDOW_WIDTH / 2 - 80, Constants::WINDOW_HEIGHT / 2 + 50);
         restartText.setFillColor(sf::Color::White);
         window.draw(restartText);
@@ -447,11 +447,12 @@ void GameEngine::processTurn() {
 
     // 回合处理完成，进入回合结束状态
     currentState = GameState::TURN_END;
-
+    GameEngine::endTurn();
     std::cout << "回合 " << currentTurn << " 处理完成" << std::endl;
 }
 
 void GameEngine::endTurn() {
+    std::cout << "Ending..." << std::endl;
     if (currentState != GameState::TURN_END) return;
 
     // 结束当前回合
@@ -460,14 +461,15 @@ void GameEngine::endTurn() {
     // 检查游戏结束条件
     if (resourceManager->isGameOver()) {
         if (resourceManager->isTimeOut()) {
-            endGame(false, "回合数用尽，未能完成路径建设！");
+            endGame(false, "Gameover!");
         }
         else {
-            endGame(false, "资源耗尽，游戏失败！");
+            endGame(false, "Gameover(R)");
         }
         return;
     }
-
+    std::cout << "Checking..."<<std::endl;
+    checkGameConditions();
     currentTurn++;
 
     // 进入下一回合的部署阶段
@@ -481,23 +483,23 @@ void GameEngine::checkGameConditions() {
     // 检查资源耗尽
     if (resourceManager->isGameOver()) {
         if (resourceManager->isTimeOut()) {
-            endGame(false, "回合数用尽，未能完成路径建设！");
+            endGame(false, "Gameover!");
         }
         else {
-            endGame(false, "资源耗尽，游戏失败！");
+            endGame(false, "Gameover(R)");
         }
         return;
     }
 
     // 检查路径是否完成
     if (constructionSystem->isPathComplete()) {
-        endGame(true, "成功连接起点和终点！道路建设完成！");
+        endGame(true, "Complete!");
         return;
     }
 
     // 检查环境严重破坏
     if (resourceManager->isEnvironmentCritical()) {
-        endGame(false, "环境破坏严重，项目被强制终止！");
+        endGame(false, "Gameover(E)");
         return;
     }
 }

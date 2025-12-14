@@ -232,8 +232,8 @@ void Render::drawObstacles(sf::RenderWindow& window, int x, int y, const Cell& c
     }
 }
 
-void Render::drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell) {
-    if (!cell.hasRoad && !cell.hasBridge && !cell.hasTunnel) return;
+void Render::drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell) const{
+    //if (!cell.hasRoad && !cell.hasBridge && !cell.hasTunnel) return;
 
     // 绘制基础道路
     if (cell.hasRoad) {

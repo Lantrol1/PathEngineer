@@ -197,7 +197,7 @@ void ResourceManager::processTurn() {
 
 void ResourceManager::endTurn() {
     // 释放所有劳动力（任务完成的会在ConstructionSystem中释放，这里释放未完成的）
-    int workersFreed = 0;
+/*  int workersFreed = 0;
     for (const auto& assignment : currentState.workerAssignments) {
         workersFreed += assignment.second;
     }
@@ -206,7 +206,7 @@ void ResourceManager::endTurn() {
         freeWorkers(workersFreed);
         currentState.workerAssignments.clear();
     }
-
+*/
     currentState.currentTurn++;
 
     // 检查游戏是否结束

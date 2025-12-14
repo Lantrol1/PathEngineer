@@ -253,11 +253,6 @@ void ConstructionSystem::processTurn() {
     }
 }
 
-void ConstructionSystem::update() {
-    // 实时更新逻辑（如果需要）
-    // 目前主要逻辑在processTurn中处理
-}
-
 void ConstructionSystem::executeConstruction(const ConstructionTask& task) {
     if (!mapSystem) return;
 
