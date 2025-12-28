@@ -102,18 +102,13 @@ bool GameStateManager::saveGame(const std::string& filename, const SaveData& dat
 
 bool GameStateManager::loadGame(const std::string& filename, SaveData& data) const {
     std::cout << "加载游戏: " << filename << std::endl;
-
     data.saveName = "示例存档";
-
     std::time_t t = std::time(nullptr);
     std::stringstream ss;
     data.timestamp = ss.str();
-
     data.gameState = GameState::IN_GAME;
     data.currentTurn = 5;
-
     std::cout << "加载存档: " << data.saveName << " (回合 " << data.currentTurn << ")" << std::endl;
-
     return true; 
 }
 
@@ -158,18 +153,6 @@ std::string GameStateManager::weatherToString(GameEnums::Weather weather) const 
 
     auto it = weatherMap.find(weather);
     return it != weatherMap.end() ? it->second : "Unknown";
-}
-
-std::string GameStateManager::difficultyToString(Difficulty difficulty) const {
-    static std::map<Difficulty, std::string> difficultyMap = {
-        {Difficulty::EASY, "EASY"},
-        {Difficulty::NORMAL, "NORMAL"},
-        {Difficulty::HARD, "HARD"},
-        {Difficulty::EXPERT, "EXPERT"}
-    };
-
-    auto it = difficultyMap.find(difficulty);
-    return it != difficultyMap.end() ? it->second : "Unknown";
 }
 
 void GameStateManager::setStateChangeCallback(std::function<void(GameState, GameState)> callback) {

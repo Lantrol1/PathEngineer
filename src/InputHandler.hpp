@@ -66,9 +66,7 @@ private:
     void handleMouseMove(const sf::Event::MouseMoveEvent& event, sf::RenderWindow& window);
     void handleMouseClick(const sf::Event::MouseButtonEvent& event, sf::RenderWindow& window);
     void handleKeyPress(const sf::Event::KeyEvent& event);
-    void handleKeyRelease(const sf::Event::KeyEvent& event);
-    void updateKeyStates();
-
+     
     // 模式特定的处理
     void handleNormalMode(int x, int y);
     void handleConstructionMode(int x, int y);
@@ -78,7 +76,6 @@ private:
     // 建设操作
     bool attemptConstruction(int x, int y);
     bool attemptWorkerAssignment(int x, int y, int count = 1);
-    bool attemptWorkerReassignment(int fromX, int fromY, int toX, int toY);
 
 public:
     InputHandler();
@@ -100,9 +97,6 @@ public:
     Constants::ConstructionType getSelectedConstruction() const { return selectedConstruction; }
     sf::Vector2i getHoveredCell() const { return mouseState.gridPosition; }
     MouseState getMouseState() const { return mouseState; }
-
-    // 快捷键配置
-    void setupShortcuts();
 
     // 回调设置
     void setConstructionSelectedCallback(std::function<void(int, int, Constants::ConstructionType)> callback);

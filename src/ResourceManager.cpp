@@ -129,10 +129,7 @@ void ResourceManager::increaseWorkers(int count) {
         int oldTotal = currentState.totalWorkers;
         currentState.totalWorkers += count;
         currentState.availableWorkers += count;
-
-        // 触发回调
         onWorkersChange(currentState.availableWorkers, currentState.totalWorkers);
-
         std::cout << "增加工人: " << count << "名" << std::endl;
     }
 }
@@ -140,16 +137,12 @@ void ResourceManager::increaseWorkers(int count) {
 void ResourceManager::updateEnvironment(int change) {
     int oldScore = currentState.environmentScore;
     currentState.environmentScore += change;
-
-    // 环境分数范围限制
     if (currentState.environmentScore < 0) {
         currentState.environmentScore = 0;
     }
     else if (currentState.environmentScore > 100) {
         currentState.environmentScore = 100;
     }
-
-    // 触发回调
     if (oldScore != currentState.environmentScore) {
         onEnvironmentChange(currentState.environmentScore);
     }
@@ -163,30 +156,21 @@ void ResourceManager::applyEnvironmentalPenalty(int severity) {
 }
 
 void ResourceManager::startTurn() {
-    // 新回合开始时的处理
     std::cout << "回合 " << currentState.currentTurn << " 开始" << std::endl;
-
-    // 触发回合回调
     onTurnChange(currentState.currentTurn);
 }
 
 void ResourceManager::processTurn() {
-    // 计算本回合的劳动力成本
     int laborCost = calculateLaborCostForTurn();
-
     if (laborCost > 0) {
         if (!spendBudget(laborCost)) {
-            // 资金不足支付工资，工人罢工
             std::cout << "资金不足支付工资! 工人罢工!" << std::endl;
-
-            // 清空所有劳动力分配
             int totalAssigned = 0;
             for (const auto& assignment : currentState.workerAssignments) {
                 totalAssigned += assignment.second;
             }
             currentState.workerAssignments.clear();
             currentState.availableWorkers = currentState.totalWorkers;
-
             onWorkersChange(currentState.availableWorkers, currentState.totalWorkers);
         }
         else {
@@ -197,11 +181,9 @@ void ResourceManager::processTurn() {
 
 void ResourceManager::endTurn() {
     currentState.currentTurn++;
-    // 检查游戏是否结束
     if (isGameOver()) {
         std::cout << "游戏结束!" << std::endl;
     }
-    // 触发回合回调
     onTurnChange(currentState.currentTurn);
 }
 
@@ -215,19 +197,17 @@ bool ResourceManager::isTimeOut() const {
 
 LaborCost ResourceManager::calculateLaborCost(int x, int y, Constants::ConstructionType type, int workerCount) const {
     LaborCost cost;
-
-    // 根据建设类型调整基础成本
     switch (type) {
     case Constants::ConstructionType::BUILD_TUNNEL:
-        cost.riskModifier += 5; // 隧道建设风险高
-        cost.terrainModifier += 3; // 山地地形难度大
+        cost.riskModifier += 5;
+        cost.terrainModifier += 3; 
         break;
     case Constants::ConstructionType::BUILD_BRIDGE:
-        cost.riskModifier += 3; // 桥梁建设有风险
-        cost.terrainModifier += 2; // 水域地形
+        cost.riskModifier += 3;
+        cost.terrainModifier += 2;
         break;
     case Constants::ConstructionType::REINFORCE_MOUNTAIN:
-        cost.riskModifier += 2; // 山地作业
+        cost.riskModifier += 2;
         cost.terrainModifier += 2;
         break;
     default:
@@ -239,7 +219,6 @@ LaborCost ResourceManager::calculateLaborCost(int x, int y, Constants::Construct
 
     return cost;
 }
-
 int ResourceManager::calculateLaborCostForTurn() const {
     int totalCost = 0;
 
@@ -253,7 +232,6 @@ int ResourceManager::calculateLaborCostForTurn() const {
         LaborCost cost = calculateLaborCost(x, y, Constants::ConstructionType::BUILD_ROAD, workerCount);
         totalCost += workerCount * cost.getTotalCost();
     }
-
     return totalCost;
 }
 
@@ -280,7 +258,6 @@ int ResourceManager::calculateConstructionCost(int x, int y, Constants::Construc
     default:
         break;
     }
-
     return baseCost;
 }
 

@@ -119,8 +119,6 @@ public:
     // 建设操作
     bool startConstruction(int x, int y, Constants::ConstructionType type);
     bool assignWorkersToTask(int x, int y, int workerCount);
-    bool reassignWorkers(int fromX, int fromY, int toX, int toY, int workerCount);
-    void cancelConstruction(int x, int y);
 
     // 回合处理
     void processTurn();

@@ -4,11 +4,7 @@
 #include <algorithm>
 #include <sstream>
 
-MapSystem::MapSystem()
-    : grid(Constants::MAP_HEIGHT,
-        std::vector<Cell>(Constants::MAP_WIDTH, Cell(0, 0))) {
-
-    // 初始化网格坐标
+MapSystem::MapSystem():grid(Constants::MAP_HEIGHT,std::vector<Cell>(Constants::MAP_WIDTH, Cell(0, 0))) {
     for (int y = 0; y < Constants::MAP_HEIGHT; ++y) {
         for (int x = 0; x < Constants::MAP_WIDTH; ++x) {
             grid[y][x] = Cell(x, y);
@@ -17,34 +13,25 @@ MapSystem::MapSystem()
 }
 
 void MapSystem::initialize() {
-    // 设置起点和终点
     startPoint = sf::Vector2i(0, Constants::MAP_HEIGHT / 2);
     endPoint = sf::Vector2i(Constants::MAP_WIDTH - 1, Constants::MAP_HEIGHT / 2);
-
-    // 标记起点和终点
     getCell(startPoint.x, startPoint.y).isStartPoint = true;
     getCell(endPoint.x, endPoint.y).isEndPoint = true;
     std::cout << startPoint.x << " " << startPoint.y << std::endl;
     std::cout << endPoint.x << " " << endPoint.y << std::endl;
-    // 设置一些基础地形
     for (int y = 0; y < Constants::MAP_HEIGHT; ++y) {
         for (int x = 0; x < Constants::MAP_WIDTH; ++x) {
-            // 创建一条河流
             if (x == Constants::MAP_WIDTH / 2 && y > 2 && y < Constants::MAP_HEIGHT - 3) {
                 grid[y][x].terrain = Constants::TerrainType::RIVER;
             }
-            // 创建山脉区域
             else if (x > 5 && x < 10 && y > 5 && y < 10) {
                 grid[y][x].terrain = Constants::TerrainType::MOUNTAIN;
             }
-            // 创建沼泽区域
             else if (x > 12 && x < 18 && y > 3 && y < 8) {
                 grid[y][x].terrain = Constants::TerrainType::SWAMP;
             }
         }
     }
-
-    // 添加一些障碍物
     getCell(3, 4).obstacle = Constants::ObstacleType::BOULDER;
     getCell(7, 7).obstacle = Constants::ObstacleType::FOREST;
     getCell(15, 5).obstacle = Constants::ObstacleType::LAKE;
@@ -53,26 +40,16 @@ void MapSystem::initialize() {
 }
 
 void MapSystem::loadLevel(const std::string& levelFile) {
-    // TODO: 从JSON文件加载关卡数据
-    // 这里先使用随机生成的地图
     generateRandomMap();
 }
 
 void MapSystem::generateRandomMap() {
-    // 简单的随机地图生成逻辑
-    // 在实际实现中，这里会有更复杂的地形生成算法
-    initialize(); // 暂时使用初始化地图
+    initialize();
 }
 
 bool MapSystem::isValidPosition(int x, int y) const {
     return x >= 0 && x < Constants::MAP_WIDTH &&
         y >= 0 && y < Constants::MAP_HEIGHT;
-}
-
-bool MapSystem::isAdjacent(int x1, int y1, int x2, int y2) const {
-    int dx = std::abs(x1 - x2);
-    int dy = std::abs(y1 - y2);
-    return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
 }
 
 Cell& MapSystem::getCell(int x, int y) {
@@ -82,12 +59,6 @@ Cell& MapSystem::getCell(int x, int y) {
     throw std::out_of_range("Invalid cell position: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
 }
 
-const Cell& MapSystem::getCell(int x, int y) const {
-    if (isValidPosition(x, y)) {
-        return grid[y][x];
-    }
-    throw std::out_of_range("Invalid cell position: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
-}
 
 bool MapSystem::canBuildAt(int x, int y, Constants::ConstructionType construction) const {
     if (!isValidPosition(x, y)) return false;
@@ -120,83 +91,51 @@ bool MapSystem::canPlaceRoad(int x, int y) const {
     if (cell.terrain == Constants::TerrainType::RIVER) {
         return false;
     }
-    // 不能在有遗迹的地方修路
-    if (cell.obstacle == Constants::ObstacleType::RUINS) {
+    if (cell.terrain == Constants::TerrainType::MOUNTAIN) {
         return false;
     }
-
-    // 不能重复修路
+    if (cell.obstacle != Constants::ObstacleType::NONE) {
+        return false;
+    }
     if (cell.hasRoad) {
         return false;
     }
-
-    // 检查是否与现有道路相邻（起点除外）
-    /*if (!cell.isStartPoint && !cell.isEndPoint) {
-        bool hasAdjacentRoad = false;
-        if (x > 0 && grid[y][x - 1].isPassable()) hasAdjacentRoad = true;
-        if (x < Constants::MAP_WIDTH - 1 && grid[y][x + 1].isPassable()) hasAdjacentRoad = true;
-        if (y > 0 && grid[y - 1][x].isPassable()) hasAdjacentRoad = true;
-        if (y < Constants::MAP_HEIGHT - 1 && grid[y + 1][x].isPassable()) hasAdjacentRoad = true;
-
-        if (!hasAdjacentRoad) {
-            return false;
-        }
-    }*/
-
     return true;
 }
 
 bool MapSystem::canBuildBridge(int x, int y) const {
     const Cell& cell = grid[y][x];
-
-    // 只能在河流上建桥
     if (cell.terrain != Constants::TerrainType::RIVER) {
         return false;
     }
-
-    // 不能重复建桥
     if (cell.hasBridge) {
         return false;
     }
-
     return true;
 }
 
 bool MapSystem::canBuildTunnel(int x, int y) const {
     const Cell& cell = grid[y][x];
-
-    // 只能在山脉上建隧道
     if (cell.terrain != Constants::TerrainType::MOUNTAIN) {
         return false;
     }
-
-    // 不能重复建隧道
     if (cell.hasTunnel) {
         return false;
     }
-
-    // 检查隧道方向规则（简化实现）
-    // 实际游戏中应该有更复杂的隧道方向检查
     return true;
 }
 
 bool MapSystem::canClearObstacle(int x, int y) const {
     const Cell& cell = grid[y][x];
-
-    // 只能清除特定类型的障碍物
     return cell.obstacle != Constants::ObstacleType::NONE &&
         cell.obstacle != Constants::ObstacleType::RUINS;
 }
 
 bool MapSystem::canReinforce(int x, int y) const {
     const Cell& cell = grid[y][x];
-
-    // 只能加固山脉
     if (cell.terrain != Constants::TerrainType::MOUNTAIN) {
         return false;
     }
-
-    // 不能重复加固
     if (cell.isReinforced) {
         return false;
     }
@@ -275,30 +214,22 @@ int MapSystem::getAssignedWorkers(int x, int y) const {
 }
 
 bool MapSystem::isPathConnected() const {
-    // 使用BFS检查起点到终点是否连通
     std::vector<std::vector<bool>> visited(
         Constants::MAP_HEIGHT,
         std::vector<bool>(Constants::MAP_WIDTH, false)
     );
-
     std::queue<sf::Vector2i> queue;
     queue.push(startPoint);
     visited[startPoint.y][startPoint.x] = true;
-
-    // 四个方向：上、右、下、左
     const int dx[4] = { 0, 1, 0, -1 };
     const int dy[4] = { -1, 0, 1, 0 };
 
     while (!queue.empty()) {
         sf::Vector2i current = queue.front();
         queue.pop();
-
-        // 如果到达终点，返回true
         if (current == endPoint) {
             return true;
         }
-
-        // 检查四个方向
         for (int i = 0; i < 4; ++i) {
             int nx = current.x + dx[i];
             int ny = current.y + dy[i];
@@ -312,68 +243,11 @@ bool MapSystem::isPathConnected() const {
             }
         }
     }
-
     return false;
 }
 
 bool MapSystem::hasDirectConnection() const {
-    // 检查是否有直接连接起点和终点的路径
     return isPathConnected();
-}
-
-std::vector<sf::Vector2i> MapSystem::findPath() const {
-    // 使用BFS找到从起点到终点的路径
-    std::vector<std::vector<bool>> visited(
-        Constants::MAP_HEIGHT,
-        std::vector<bool>(Constants::MAP_WIDTH, false)
-    );
-
-    std::vector<std::vector<sf::Vector2i>> parent(
-        Constants::MAP_HEIGHT,
-        std::vector<sf::Vector2i>(Constants::MAP_WIDTH, sf::Vector2i(-1, -1))
-    );
-
-    std::queue<sf::Vector2i> queue;
-    queue.push(startPoint);
-    visited[startPoint.y][startPoint.x] = true;
-
-    const int dx[4] = { 0, 1, 0, -1 };
-    const int dy[4] = { -1, 0, 1, 0 };
-
-    while (!queue.empty()) {
-        sf::Vector2i current = queue.front();
-        queue.pop();
-
-        if (current == endPoint) {
-            // 重建路径
-            std::vector<sf::Vector2i> path;
-            sf::Vector2i step = endPoint;
-
-            while (step != startPoint) {
-                path.push_back(step);
-                step = parent[step.y][step.x];
-            }
-            path.push_back(startPoint);
-            std::reverse(path.begin(), path.end());
-            return path;
-        }
-
-        for (int i = 0; i < 4; ++i) {
-            int nx = current.x + dx[i];
-            int ny = current.y + dy[i];
-
-            if (isValidPosition(nx, ny) && !visited[ny][nx]) {
-                const Cell& neighbor = grid[ny][nx];
-                if (neighbor.isPassable()) {
-                    visited[ny][nx] = true;
-                    parent[ny][nx] = current;
-                    queue.push(sf::Vector2i(nx, ny));
-                }
-            }
-        }
-    }
-
-    return {}; // 没有找到路径
 }
 
 int MapSystem::getTerrainBuildCost(int x, int y, Constants::ConstructionType type) const {
@@ -454,7 +328,6 @@ std::string MapSystem::serialize() const {
 }
 
 void MapSystem::deserialize(const std::string& data) {
-    // 简单的反序列化实现
     std::stringstream ss(data);
     std::string token;
 

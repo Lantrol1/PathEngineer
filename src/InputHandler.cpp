@@ -15,7 +15,6 @@ InputHandler::InputHandler()
     onCellSelected = [](int, int) {};
     onInputMessage = [](const std::string&) {};
 
-    setupShortcuts();
 }
 
 void InputHandler::initialize(ConstructionSystem* constSys, MapSystem* mapSys,
@@ -56,19 +55,11 @@ void InputHandler::handleEvent(const sf::Event& event, sf::RenderWindow& window)
         break;
 
     case sf::Event::KeyReleased:
-        handleKeyRelease(event.key);
         keyStates[event.key.code] = false;
         break;
-
-    case sf::Event::MouseWheelScrolled:
-        // 鼠标滚轮处理（可用于缩放或快速切换）
-        break;
-
     default:
         break;
     }
-
-    updateKeyStates();
 }
 
 void InputHandler::update() {
@@ -118,7 +109,7 @@ void InputHandler::handleMouseClick(const sf::Event::MouseButtonEvent& event, sf
 
         switch (currentMode) {
         case InputMode::NORMAL:
-            handleNormalMode(gridPos.x, gridPos.y);
+            handleCellInspectionMode(gridPos.x, gridPos.y);
             break;
 
         case InputMode::CONSTRUCTION:
@@ -129,19 +120,11 @@ void InputHandler::handleMouseClick(const sf::Event::MouseButtonEvent& event, sf
             handleWorkerAssignmentMode(gridPos.x, gridPos.y);
             break;
 
-        case InputMode::CELL_INSPECTION:
-            handleCellInspectionMode(gridPos.x, gridPos.y);
-            break;
         }
-
-        // 触发选择回调
         onCellSelected(gridPos.x, gridPos.y);
-
     }
     else if (event.button == sf::Mouse::Right) {
         mouseState.rightClicked = true;
-
-        // 右键通常用于取消操作或返回正常模式
         if (currentMode != InputMode::NORMAL) {
             setInputMode(InputMode::NORMAL);
             onInputMessage("取消当前操作");
@@ -156,80 +139,29 @@ void InputHandler::handleKeyPress(const sf::Event::KeyEvent& event) {
         setInputMode(InputMode::NORMAL);
         onInputMessage("返回正常模式");
         break;
-
     case sf::Keyboard::R:
-        if (currentMode == InputMode::CONSTRUCTION && selectedConstruction == Constants::ConstructionType::BUILD_ROAD) {
-            setInputMode(InputMode::NORMAL);
-        }
-        else {
-            toggleConstructionMode(Constants::ConstructionType::BUILD_ROAD);
-        }
+        toggleConstructionMode(Constants::ConstructionType::BUILD_ROAD);
         break;
 
     case sf::Keyboard::B:
-        if (currentMode == InputMode::CONSTRUCTION && selectedConstruction == Constants::ConstructionType::BUILD_BRIDGE) {
-            setInputMode(InputMode::NORMAL);
-        }
-        else {
-            toggleConstructionMode(Constants::ConstructionType::BUILD_BRIDGE);
-        }
+        toggleConstructionMode(Constants::ConstructionType::BUILD_BRIDGE);
         break;
 
     case sf::Keyboard::T:
-        if (currentMode == InputMode::CONSTRUCTION && selectedConstruction == Constants::ConstructionType::BUILD_TUNNEL) {
-            setInputMode(InputMode::NORMAL);
-        }
-        else {
-            toggleConstructionMode(Constants::ConstructionType::BUILD_TUNNEL);
-        }
+        toggleConstructionMode(Constants::ConstructionType::BUILD_TUNNEL);
         break;
 
     case sf::Keyboard::C:
-        if (currentMode == InputMode::CONSTRUCTION && selectedConstruction == Constants::ConstructionType::CLEAR_OBSTACLE) {
-            setInputMode(InputMode::NORMAL);
-        }
-        else {
-            toggleConstructionMode(Constants::ConstructionType::CLEAR_OBSTACLE);
-        }
+        toggleConstructionMode(Constants::ConstructionType::CLEAR_OBSTACLE);
         break;
 
     case sf::Keyboard::F:
-        if (currentMode == InputMode::CONSTRUCTION && selectedConstruction == Constants::ConstructionType::REINFORCE_MOUNTAIN) {
-            setInputMode(InputMode::NORMAL);
-        }
-        else {
-            toggleConstructionMode(Constants::ConstructionType::REINFORCE_MOUNTAIN);
-        }
+        toggleConstructionMode(Constants::ConstructionType::REINFORCE_MOUNTAIN);
         break;
 
     case sf::Keyboard::W:
         setInputMode(InputMode::WORKER_ASSIGNMENT);
-        onInputMessage("工人分配模式 - 点击单元格分配工人");
-        break;
-
-    case sf::Keyboard::I:
-        setInputMode(InputMode::CELL_INSPECTION);
-        onInputMessage("单元格检查模式");
-        break;
-
-    case sf::Keyboard::Num1:
-    case sf::Keyboard::Numpad1:
-        attemptWorkerAssignment(mouseState.gridPosition.x, mouseState.gridPosition.y, 1);
-        break;
-
-    case sf::Keyboard::Num2:
-    case sf::Keyboard::Numpad2:
-        attemptWorkerAssignment(mouseState.gridPosition.x, mouseState.gridPosition.y, 2);
-        break;
-
-    case sf::Keyboard::Num3:
-    case sf::Keyboard::Numpad3:
-        attemptWorkerAssignment(mouseState.gridPosition.x, mouseState.gridPosition.y, 3);
-        break;
-
-    case sf::Keyboard::Space:
-        // 空格键用于快速操作，如确认或跳过回合
-        onInputMessage("空格键按下");
+        onInputMessage("点击单元格分配工人");
         break;
 
     default:
@@ -237,51 +169,15 @@ void InputHandler::handleKeyPress(const sf::Event::KeyEvent& event) {
     }
 }
 
-void InputHandler::handleKeyRelease(const sf::Event::KeyEvent& event) {
-    // 按键释放处理（如果需要）
-}
-
-void InputHandler::updateKeyStates() {
-    // 更新键盘状态（如果需要持续检测）
-}
-
 sf::Vector2i InputHandler::getCellAtPosition(const sf::Vector2f& position) const {
     if (!mapSystem) return sf::Vector2i(-1, -1);
-
     int cellX = static_cast<int>(position.x / Constants::GRID_SIZE);
     int cellY = static_cast<int>(position.y / Constants::GRID_SIZE);
-
     if (cellX >= 0 && cellX < mapSystem->getWidth() &&
         cellY >= 0 && cellY < mapSystem->getHeight()) {
         return sf::Vector2i(cellX, cellY);
     }
-
     return sf::Vector2i(-1, -1);
-}
-
-void InputHandler::handleNormalMode(int x, int y) {
-    // 正常模式下的点击：显示单元格信息
-    if (mapSystem) {
-        const Cell& cell = mapSystem->getCell(x, y);
-
-        std::stringstream info;
-        info << "位置: (" << x << ", " << y << ")\n";
-        info << "地形: ";
-
-        switch (cell.terrain) {
-        case Constants::TerrainType::PLAIN: info << "平原"; break;
-        case Constants::TerrainType::RIVER: info << "河流"; break;
-        case Constants::TerrainType::MOUNTAIN: info << "山脉"; break;
-        case Constants::TerrainType::SWAMP: info << "沼泽"; break;
-        }
-
-        if (cell.hasRoad) info << "\n有道路";
-        if (cell.hasBridge) info << "\n有桥梁";
-        if (cell.hasTunnel) info << "\n有隧道";
-        if (cell.isReinforced) info << "\n已加固";
-
-        onInputMessage(info.str());
-    }
 }
 
 void InputHandler::handleConstructionMode(int x, int y) {
@@ -292,7 +188,6 @@ void InputHandler::handleConstructionMode(int x, int y) {
 
 void InputHandler::handleWorkerAssignmentMode(int x, int y) {
     if (constructionSystem && constructionSystem->hasActiveTask(x, y)) {
-        // 如果有建设任务，分配工人
         attemptWorkerAssignment(x, y, 1);
     }
     else {
@@ -309,7 +204,7 @@ void InputHandler::handleCellInspectionMode(int x, int y) {
         info << "=== 单元格详情 ===\n";
         info << "位置: (" << x << ", " << y << ")\n";
 
-        // 地形信息
+        // 地形
         info << "地形: ";
         switch (cell.terrain) {
         case Constants::TerrainType::PLAIN: info << "平原"; break;
@@ -318,8 +213,7 @@ void InputHandler::handleCellInspectionMode(int x, int y) {
         case Constants::TerrainType::SWAMP: info << "沼泽"; break;
         }
         info << "\n";
-
-        // 障碍物信息
+        // 障碍物
         if (cell.obstacle != Constants::ObstacleType::NONE) {
             info << "障碍物: ";
             switch (cell.obstacle) {
@@ -334,17 +228,16 @@ void InputHandler::handleCellInspectionMode(int x, int y) {
         }
 
         // 建设状态
-        if (cell.hasRoad) info << "✓ 有道路\n";
-        if (cell.hasBridge) info << "✓ 有桥梁\n";
-        if (cell.hasTunnel) info << "✓ 有隧道\n";
-        if (cell.isReinforced) info << "✓ 已加固\n";
+        if (cell.hasRoad) info << "有道路\n";
+        if (cell.hasBridge) info << "有桥梁\n";
+        if (cell.hasTunnel) info << "有隧道\n";
+        if (cell.isReinforced) info << "已加固\n";
 
-        // 劳动力信息
+        // 劳动力
         if (cell.assignedWorkers > 0) {
             info << "分配工人: " << cell.assignedWorkers << "\n";
         }
-
-        // 建设任务信息
+        // 建设任务
         if (constructionSystem) {
             const ConstructionTask* task = constructionSystem->getTask(x, y);
             if (task) {
@@ -390,18 +283,6 @@ bool InputHandler::attemptWorkerAssignment(int x, int y, int count) {
     return false;
 }
 
-bool InputHandler::attemptWorkerReassignment(int fromX, int fromY, int toX, int toY) {
-    if (!constructionSystem) return false;
-
-    const ConstructionTask* fromTask = constructionSystem->getTask(fromX, fromY);
-    if (!fromTask || fromTask->assignedWorkers == 0) {
-        onInputMessage("源位置没有工人可重新分配");
-        return false;
-    }
-
-    return constructionSystem->reassignWorkers(fromX, fromY, toX, toY, 1);
-}
-
 void InputHandler::setInputMode(InputMode mode) {
     currentMode = mode;
 
@@ -420,36 +301,27 @@ void InputHandler::setConstructionType(Constants::ConstructionType type) {
 }
 
 void InputHandler::toggleConstructionMode(Constants::ConstructionType type) {
-    if (currentMode == InputMode::CONSTRUCTION && selectedConstruction == type) {
-        setInputMode(InputMode::NORMAL);
-    }
-    else {
-        setConstructionType(type);
-    }
-}
-
-void InputHandler::setupShortcuts() {
-    // 快捷键配置已在handleKeyPress中实现
+    setConstructionType(type);
 }
 
 std::string InputHandler::getConstructionName(Constants::ConstructionType type) const {
     switch (type) {
-    case Constants::ConstructionType::BUILD_ROAD: return "修建道路";
-    case Constants::ConstructionType::BUILD_BRIDGE: return "修建桥梁";
-    case Constants::ConstructionType::BUILD_TUNNEL: return "开凿隧道";
-    case Constants::ConstructionType::CLEAR_OBSTACLE: return "清除障碍";
-    case Constants::ConstructionType::REINFORCE_MOUNTAIN: return "加固山体";
-    default: return "未知操作";
+    case Constants::ConstructionType::BUILD_ROAD: return "Build Road";
+    case Constants::ConstructionType::BUILD_BRIDGE: return "Build Bridge";
+    case Constants::ConstructionType::BUILD_TUNNEL: return "Build Tunnel";
+    case Constants::ConstructionType::CLEAR_OBSTACLE: return "Clear Obstacle";
+    case Constants::ConstructionType::REINFORCE_MOUNTAIN: return "Reinforce Mountain";
+    default: return "Unknown";
     }
 }
 
 std::string InputHandler::getInputModeName() const {
     switch (currentMode) {
-    case InputMode::NORMAL: return "正常模式";
-    case InputMode::CONSTRUCTION: return "建设模式: " + getConstructionName(selectedConstruction);
-    case InputMode::WORKER_ASSIGNMENT: return "工人分配模式";
-    case InputMode::CELL_INSPECTION: return "单元格检查模式";
-    default: return "未知模式";
+    case InputMode::NORMAL: return "Normal";
+    case InputMode::CONSTRUCTION: return "Construction - " + getConstructionName(selectedConstruction);
+    case InputMode::WORKER_ASSIGNMENT: return "Worker Assignment";
+    case InputMode::CELL_INSPECTION: return "Cell Inspection";
+    default: return "Unknown";
     }
 }
 

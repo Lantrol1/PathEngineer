@@ -11,7 +11,6 @@ Render::Render()
     showGrid(true), showCoordinates(false), showWorkers(true),
     zoomLevel(1.0f) {
 
-    // 初始化地形颜色映射
     terrainColors = {
         {Constants::TerrainType::PLAIN, Constants::COLOR_PLAIN},
         {Constants::TerrainType::RIVER, Constants::COLOR_RIVER},
@@ -19,7 +18,6 @@ Render::Render()
         {Constants::TerrainType::SWAMP, Constants::COLOR_SWAMP}
     };
 
-    // 初始化障碍物颜色映射
     obstacleColors = {
         {Constants::ObstacleType::NONE, sf::Color::Transparent},
         {Constants::ObstacleType::BOULDER, sf::Color(120, 120, 120)},
@@ -29,7 +27,6 @@ Render::Render()
         {Constants::ObstacleType::RUINS, sf::Color(160, 82, 45)}
     };
 
-    // 初始化建设类型颜色映射
     constructionColors = {
         {Constants::ConstructionType::BUILD_ROAD, Constants::COLOR_ROAD},
         {Constants::ConstructionType::BUILD_BRIDGE, Constants::COLOR_BRIDGE},
@@ -39,10 +36,7 @@ Render::Render()
     };
 }
 
-void Render::initialize(MapSystem* mapSys, ResourceManager* resMgr,
-    ConstructionSystem* constSys,
-    RandomEvent* eventSys,
-    InputHandler* inputHndlr) {
+void Render::initialize(MapSystem* mapSys, ResourceManager* resMgr, ConstructionSystem* constSys, RandomEvent* eventSys, InputHandler* inputHndlr) {
     mapSystem = mapSys;
     resourceManager = resMgr;
     constructionSystem = constSys;
@@ -63,26 +57,11 @@ void Render::initialize(MapSystem* mapSys, ResourceManager* resMgr,
 }
 
 void Render::draw(sf::RenderWindow& window) {
-    // 设置游戏视图
     window.setView(gameView);
-
-    // 绘制地图
     drawMap(window);
-
-    // 绘制网格（如果启用）
-    if (showGrid) {
-        drawGrid(window);
-    }
-
-    // 绘制坐标（如果启用）
-    if (showCoordinates) {
-        drawCoordinates(window);
-    }
-
-    // 设置UI视图
+    drawGrid(window);
+    drawCoordinates(window);
     window.setView(uiView);
-
-    // 绘制UI
     drawUI(window);
 }
 
@@ -99,19 +78,11 @@ void Render::drawMap(sf::RenderWindow& window) {
 }
 
 void Render::drawCell(sf::RenderWindow& window, int x, int y, const Cell& cell) {
-    // 绘制地形基础
     drawTerrain(window, x, y, cell);
-
-    // 绘制障碍物
     drawObstacles(window, x, y, cell);
-
-    // 绘制道路和设施
     drawRoads(window, x, y, cell);
-
-    // 绘制建设状态
     drawConstruction(window, x, y, cell);
-
-    // 绘制覆盖层（悬停、选择等）
+    // 渲染覆盖层
     drawOverlay(window, x, y, cell);
 }
 
@@ -119,7 +90,7 @@ void Render::drawTerrain(sf::RenderWindow& window, int x, int y, const Cell& cel
     sf::RectangleShape terrainShape(sf::Vector2f(Constants::GRID_SIZE, Constants::GRID_SIZE));
     terrainShape.setPosition(x * Constants::GRID_SIZE, y * Constants::GRID_SIZE);
 
-    // 设置地形颜色
+    // 地形颜色
     auto it = terrainColors.find(cell.terrain);
     if (it != terrainColors.end()) {
         terrainShape.setFillColor(it->second);
@@ -136,22 +107,19 @@ void Render::drawTerrain(sf::RenderWindow& window, int x, int y, const Cell& cel
 
     // 特殊地形标记
     if (cell.terrain == Constants::TerrainType::RIVER) {
-        // 绘制河流波纹效果
+        // 河流
         sf::RectangleShape wave(sf::Vector2f(Constants::GRID_SIZE - 4, 2));
         wave.setPosition(x * Constants::GRID_SIZE + 2, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 2);
         wave.setFillColor(sf::Color(200, 200, 255, 150));
         window.draw(wave);
     }
     else if (cell.terrain == Constants::TerrainType::MOUNTAIN) {
-        // 绘制山脉三角形
+        // 山脉
         sf::ConvexShape mountain;
         mountain.setPointCount(3);
-        mountain.setPoint(0, sf::Vector2f(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 2,
-            y * Constants::GRID_SIZE + 5));
-        mountain.setPoint(1, sf::Vector2f(x * Constants::GRID_SIZE + 10,
-            y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
-        mountain.setPoint(2, sf::Vector2f(x * Constants::GRID_SIZE + Constants::GRID_SIZE - 10,
-            y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
+        mountain.setPoint(0, sf::Vector2f(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 2, y * Constants::GRID_SIZE + 5));
+        mountain.setPoint(1, sf::Vector2f(x * Constants::GRID_SIZE + 10, y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
+        mountain.setPoint(2, sf::Vector2f(x * Constants::GRID_SIZE + Constants::GRID_SIZE - 10, y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
         mountain.setFillColor(sf::Color(100, 100, 100, 200));
         window.draw(mountain);
     }
@@ -167,27 +135,23 @@ void Render::drawObstacles(sf::RenderWindow& window, int x, int y, const Cell& c
 
     switch (cell.obstacle) {
     case Constants::ObstacleType::BOULDER: {
-        // 绘制巨石（圆形）
+        // 绘制巨石
         sf::CircleShape boulder(Constants::GRID_SIZE / 3);
-        boulder.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 6,
-            y * Constants::GRID_SIZE + Constants::GRID_SIZE / 6);
+        boulder.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 6, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 6);
         boulder.setFillColor(obstacleColor);
         window.draw(boulder);
         break;
     }
 
     case Constants::ObstacleType::FOREST: {
-        // 绘制森林（多个三角形表示树木）
+        // 绘制森林
         for (int i = 0; i < 3; ++i) {
             sf::ConvexShape tree;
             tree.setPointCount(3);
             float offsetX = (i * Constants::GRID_SIZE / 3) + Constants::GRID_SIZE / 6;
-            tree.setPoint(0, sf::Vector2f(x * Constants::GRID_SIZE + offsetX,
-                y * Constants::GRID_SIZE + Constants::GRID_SIZE / 3));
-            tree.setPoint(1, sf::Vector2f(x * Constants::GRID_SIZE + offsetX - 5,
-                y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
-            tree.setPoint(2, sf::Vector2f(x * Constants::GRID_SIZE + offsetX + 5,
-                y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
+            tree.setPoint(0, sf::Vector2f(x * Constants::GRID_SIZE + offsetX, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 3));
+            tree.setPoint(1, sf::Vector2f(x * Constants::GRID_SIZE + offsetX - 5, y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
+            tree.setPoint(2, sf::Vector2f(x * Constants::GRID_SIZE + offsetX + 5, y * Constants::GRID_SIZE + Constants::GRID_SIZE - 5));
             tree.setFillColor(obstacleColor);
             window.draw(tree);
         }
@@ -195,7 +159,7 @@ void Render::drawObstacles(sf::RenderWindow& window, int x, int y, const Cell& c
     }
 
     case Constants::ObstacleType::LAKE: {
-        // 绘制湖泊（椭圆）
+        // 湖泊
         sf::CircleShape lake(Constants::GRID_SIZE / 2);
         lake.setPosition(x * Constants::GRID_SIZE, y * Constants::GRID_SIZE);
         lake.setFillColor(obstacleColor);
@@ -204,7 +168,7 @@ void Render::drawObstacles(sf::RenderWindow& window, int x, int y, const Cell& c
     }
 
     case Constants::ObstacleType::CLIFF: {
-        // 绘制悬崖（锯齿线）
+        // 悬崖
         sf::VertexArray cliff(sf::LinesStrip, 5);
         for (int i = 0; i < 5; ++i) {
             float posX = x * Constants::GRID_SIZE + (i * Constants::GRID_SIZE / 4);
@@ -217,7 +181,7 @@ void Render::drawObstacles(sf::RenderWindow& window, int x, int y, const Cell& c
     }
 
     case Constants::ObstacleType::RUINS: {
-        // 绘制遗迹（矩形废墟）
+        // 遗迹
         sf::RectangleShape ruins(sf::Vector2f(Constants::GRID_SIZE - 10, Constants::GRID_SIZE - 10));
         ruins.setPosition(x * Constants::GRID_SIZE + 5, y * Constants::GRID_SIZE + 5);
         ruins.setFillColor(obstacleColor);
@@ -233,16 +197,14 @@ void Render::drawObstacles(sf::RenderWindow& window, int x, int y, const Cell& c
 }
 
 void Render::drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell) const{
-    //if (!cell.hasRoad && !cell.hasBridge && !cell.hasTunnel) return;
-
-    // 绘制基础道路
+    // 道路
     if (cell.hasRoad) {
         sf::RectangleShape road(sf::Vector2f(Constants::GRID_SIZE - 8, Constants::GRID_SIZE - 8));
         road.setPosition(x * Constants::GRID_SIZE + 4, y * Constants::GRID_SIZE + 4);
 
         if (cell.hasBridge) {
             road.setFillColor(Constants::COLOR_BRIDGE);
-            // 桥梁标记线
+            // 桥梁
             sf::RectangleShape bridgeLine(sf::Vector2f(Constants::GRID_SIZE - 12, 2));
             bridgeLine.setPosition(x * Constants::GRID_SIZE + 6, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 2);
             bridgeLine.setFillColor(sf::Color::White);
@@ -250,7 +212,7 @@ void Render::drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell)
         }
         else if (cell.hasTunnel) {
             road.setFillColor(Constants::COLOR_TUNNEL);
-            // 隧道标记
+            // 隧道
             sf::RectangleShape tunnelMark(sf::Vector2f(4, Constants::GRID_SIZE - 12));
             tunnelMark.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 2,
                 y * Constants::GRID_SIZE + 6);
@@ -264,34 +226,30 @@ void Render::drawRoads(sf::RenderWindow& window, int x, int y, const Cell& cell)
         window.draw(road);
     }
 
-    // 绘制起点和终点标记
+    // 起点终点
     if (cell.isStartPoint) {
         sf::CircleShape startMarker(Constants::GRID_SIZE / 4);
-        startMarker.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 4,
-            y * Constants::GRID_SIZE + Constants::GRID_SIZE / 4);
+        startMarker.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 4, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 4);
         startMarker.setFillColor(sf::Color::Green);
         window.draw(startMarker);
 
         // 起点文字
         sf::Text startText("S", font, 12);
-        startText.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 3,
-            y * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 6);
-        startText.setFillColor(sf::Color::White);
+        startText.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 3, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 6);
+        startText.setFillColor(sf::Color::Black);
         window.draw(startText);
     }
 
     if (cell.isEndPoint) {
         sf::CircleShape endMarker(Constants::GRID_SIZE / 4);
-        endMarker.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 4,
-            y * Constants::GRID_SIZE + Constants::GRID_SIZE / 4);
+        endMarker.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 4, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 4);
         endMarker.setFillColor(sf::Color::Red);
         window.draw(endMarker);
 
         // 终点文字
         sf::Text endText("E", font, 12);
-        endText.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 3,
-            y * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 6);
-        endText.setFillColor(sf::Color::White);
+        endText.setPosition(x * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 3, y * Constants::GRID_SIZE + Constants::GRID_SIZE / 2 - 6);
+        endText.setFillColor(sf::Color::Black);
         window.draw(endText);
     }
 }
@@ -338,15 +296,15 @@ void Render::drawConstruction(sf::RenderWindow& window, int x, int y, const Cell
 }
 
 void Render::drawOverlay(sf::RenderWindow& window, int x, int y, const Cell& cell) {
-    // 悬停效果
+    // 鼠标悬停
     if (hoveredCell.x == x && hoveredCell.y == y) {
         sf::RectangleShape hover(sf::Vector2f(Constants::GRID_SIZE, Constants::GRID_SIZE));
         hover.setPosition(x * Constants::GRID_SIZE, y * Constants::GRID_SIZE);
-        hover.setFillColor(sf::Color(255, 255, 255, 50)); // 半透明白色
+        hover.setFillColor(sf::Color(255, 255, 255, 50));
         window.draw(hover);
     }
 
-    // 选中效果
+    // 鼠标选中
     if (selectedCell.x == x && selectedCell.y == y) {
         sf::RectangleShape selected(sf::Vector2f(Constants::GRID_SIZE, Constants::GRID_SIZE));
         selected.setPosition(x * Constants::GRID_SIZE, y * Constants::GRID_SIZE);
@@ -355,8 +313,6 @@ void Render::drawOverlay(sf::RenderWindow& window, int x, int y, const Cell& cel
         selected.setOutlineColor(sf::Color::Yellow);
         window.draw(selected);
     }
-
-    // 加固标记
     if (cell.isReinforced) {
         sf::RectangleShape reinforce(sf::Vector2f(Constants::GRID_SIZE, 3));
         reinforce.setPosition(x * Constants::GRID_SIZE, y * Constants::GRID_SIZE);
@@ -375,22 +331,16 @@ void Render::drawUI(sf::RenderWindow& window) {
 
 void Render::drawResourcePanel(sf::RenderWindow& window) {
     if (!resourceManager) return;
-
-    // 资源面板背景
     sf::RectangleShape panel(sf::Vector2f(200, 120));
-    panel.setPosition(10, 10);
+    panel.setPosition(1280, 10);//10，10
     panel.setFillColor(sf::Color(0, 0, 0, 180));
     panel.setOutlineThickness(1);
     panel.setOutlineColor(sf::Color::White);
     window.draw(panel);
-
-    // 资源标题
     sf::Text title("Resource Status", font, 16);
-    title.setPosition(20, 15);
+    title.setPosition(1290, 15);
     title.setFillColor(sf::Color::White);
     window.draw(title);
-
-    // 资源信息
     std::stringstream resources;
     resources << "Budget: " << resourceManager->getBudget() << "\n"
         << "Workers: " << resourceManager->getAvailableWorkers() << "/"
@@ -398,17 +348,14 @@ void Render::drawResourcePanel(sf::RenderWindow& window) {
         << "Environment: " << resourceManager->getEnvironmentScore() << "\n"
         << "Round: " << resourceManager->getCurrentTurn() << "/"
         << resourceManager->getTotalTurns();
-
     sf::Text resourceText(resources.str(), font, 14);
-    resourceText.setPosition(20, 40);
+    resourceText.setPosition(1290, 40);
     resourceText.setFillColor(sf::Color::White);
     resourceText.setLineSpacing(1.2f);
     window.draw(resourceText);
-
-    // 警告状态
     if (resourceManager->isBudgetCritical()) {
         sf::Text warning("Short on budget!", font, 12);
-        warning.setPosition(20, 105);
+        warning.setPosition(1290, 105);
         warning.setFillColor(sf::Color::Red);
         window.draw(warning);
     }
@@ -429,7 +376,6 @@ void Render::drawStatusPanel(sf::RenderWindow& window) {
     title.setFillColor(sf::Color::White);
     window.draw(title);
 
-    // 输入模式显示
     if (inputHandler) {
         sf::Text modeText("Mode: " + inputHandler->getInputModeName(), font, 12);
         modeText.setPosition(Constants::WINDOW_WIDTH - 250, 40);
@@ -437,7 +383,6 @@ void Render::drawStatusPanel(sf::RenderWindow& window) {
         window.draw(modeText);
     }
 
-    // 路径连通状态
     if (constructionSystem) {
         std::string pathStatus = constructionSystem->isPathComplete() ?
             "Connected ✓" : "Not connected ✗";
@@ -603,13 +548,13 @@ void Render::drawGrid(sf::RenderWindow& window) {
     }
 }
 
-void Render::drawCoordinates(sf::RenderWindow& window) {
+void Render::drawCoordinates(sf::RenderWindow& window) const{
     for (int y = 0; y < Constants::MAP_HEIGHT; ++y) {
         for (int x = 0; x < Constants::MAP_WIDTH; ++x) {
             std::string coord = std::to_string(x) + "," + std::to_string(y);
-            sf::Text coordText(coord, font, 8);
+            sf::Text coordText(coord, font, 12);
             coordText.setPosition(x * Constants::GRID_SIZE + 2, y * Constants::GRID_SIZE + 2);
-            coordText.setFillColor(sf::Color(255, 255, 255, 100));
+            coordText.setFillColor(sf::Color(0, 0, 0, 100));
             window.draw(coordText);
         }
     }
@@ -628,22 +573,16 @@ void Render::resetView() {
     gameView = sf::View(sf::FloatRect(0, 0, Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT));
     zoomLevel = 1.0f;
 }
-
 void Render::setHoveredCell(int x, int y) {
     hoveredCell = sf::Vector2i(x, y);
 }
-
 void Render::setSelectedCell(int x, int y) {
     selectedCell = sf::Vector2i(x, y);
 }
-
 bool Render::loadFont(const std::string& fontPath) {
     return font.loadFromFile(fontPath);
 }
-
 bool Render::loadTextures() {
-    // 在实际项目中，这里会加载图片纹理
-    // 目前使用颜色代替纹理，所以返回true
     return true;
 }
 

@@ -296,16 +296,4 @@ int main(int argc, char* argv[]) {
 
         return -1;
     }
-    /*catch (...) {
-        ConsoleColor color;
-        color.setColor(12);
-        std::cerr << "================================================" << std::endl;
-        std::cerr << "发生未知错误!" << std::endl;
-        std::cerr << "================================================" << std::endl;
-
-        std::cerr << "按任意键退出..." << std::endl;
-        std::cin.get();
-
-        return -1;
-    }*/
 }

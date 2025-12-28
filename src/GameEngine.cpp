@@ -50,7 +50,6 @@ void GameEngine::initializeSystems() {
     randomEvent = std::make_unique<RandomEvent>();
     inputHandler = std::make_unique<InputHandler>();
     Rrender = std::make_unique<Render>();
-
     // 初始化各个系统
     stateManager = std::make_unique<GameStateManager>();
     mapSystem->initialize();
@@ -87,9 +86,6 @@ void GameEngine::setupCallbacks() {
         std::cout << "开始建设: " << task.description << " 在 (" << task.x << ", " << task.y << ")" << std::endl;
         });
 
-    constructionSystem->setTaskProgressCallback([this](const ConstructionTask& task) {
-        // 进度更新（可以在这里添加进度显示更新）
-        });
 
     constructionSystem->setTaskCompletedCallback([this](const ConstructionTask& task) {
         std::cout << "完成建设: " << task.description << " 在 (" << task.x << ", " << task.y << ")" << std::endl;
@@ -288,7 +284,7 @@ void GameEngine::handleInput(const sf::Event& event) {
     }
 }
 
-void GameEngine::update(float deltaTime) {
+ void GameEngine::update(float deltaTime) {
     // 根据游戏状态进行更新
     switch (currentState) {
     case GameState::MAIN_MENU:
@@ -440,14 +436,8 @@ void GameEngine::startTurn() {
 
 void GameEngine::processTurn() {
     if (currentState != GameState::TURN_PROCESSING) return;
-
-    // 处理建设进度
     constructionSystem->processTurn();
-
-    // 处理资源消耗
     resourceManager->processTurn();
-
-    // 回合处理完成，进入回合结束状态
     currentState = GameState::TURN_END;
     GameEngine::endTurn();
     std::cout << "回合 " << currentTurn << " 处理完成" << std::endl;
@@ -456,11 +446,7 @@ void GameEngine::processTurn() {
 void GameEngine::endTurn() {
     std::cout << "Ending..." << std::endl;
     if (currentState != GameState::TURN_END) return;
-
-    // 结束当前回合
     resourceManager->endTurn();
-
-    // 检查游戏结束条件
     if (resourceManager->isGameOver()) {
         if (resourceManager->isTimeOut()) {
             endGame(false, "Gameover!");
@@ -473,8 +459,6 @@ void GameEngine::endTurn() {
     std::cout << "Checking..."<<std::endl;
     checkGameConditions();
     currentTurn++;
-
-    // 进入下一回合的部署阶段
     if(currentState!=GameState::GAME_OVER)
         currentState = GameState::DEPLOYMENT;
 
@@ -483,7 +467,6 @@ void GameEngine::endTurn() {
 }
 
 void GameEngine::checkGameConditions() {
-    // 检查资源耗尽
     if (resourceManager->isGameOver()) {
         if (resourceManager->isTimeOut()) {
             endGame(false, "Gameover!");
@@ -493,8 +476,6 @@ void GameEngine::checkGameConditions() {
         }
         return;
     }
-
-    // 检查路径是否完成
     if (constructionSystem->isPathComplete()) {
         endGame(true, "Complete!");
         return;
@@ -509,19 +490,15 @@ void GameEngine::checkGameConditions() {
 
 void GameEngine::cleanup() {
     std::cout << "清理游戏资源..." << std::endl;
-
-    // 按依赖顺序清理系统
     inputHandler.reset();
     Rrender.reset();
     randomEvent.reset();
     constructionSystem.reset();
     resourceManager.reset();
     mapSystem.reset();
-
     if (window.isOpen()) {
         window.close();
     }
-
     std::cout << "游戏资源清理完成" << std::endl;
 }
 
@@ -538,26 +515,21 @@ void GameEngine::printGameState() const {
     case GameState::PAUSED: std::cout << "暂停"; break;
     }
     std::cout << std::endl;
-
     std::cout << "游戏运行: " << (gameRunning ? "是" : "否") << std::endl;
     std::cout << "游戏暂停: " << (gamePaused ? "是" : "否") << std::endl;
     std::cout << "当前回合: " << currentTurn << "/" << maxTurns << std::endl;
     std::cout << "游戏胜利: " << (gameWon ? "是" : "否") << std::endl;
-
     if (resourceManager) {
         std::cout << "预算: " << resourceManager->getBudget() << std::endl;
         std::cout << "工人: " << resourceManager->getAvailableWorkers() << "/" << resourceManager->getTotalWorkers() << std::endl;
         std::cout << "环境: " << resourceManager->getEnvironmentScore() << std::endl;
     }
-
     if (constructionSystem) {
-        std::cout << "活跃任务: " << constructionSystem->getActiveTaskCount() << std::endl;
+        std::cout << "任务: " << constructionSystem->getActiveTaskCount() << std::endl;
         std::cout << "路径完成: " << (constructionSystem->isPathComplete() ? "是" : "否") << std::endl;
     }
-
     if (randomEvent) {
-        std::cout << "活跃事件: " << randomEvent->getActiveEvents().size() << std::endl;
+        std::cout << "事件: " << randomEvent->getActiveEvents().size() << std::endl;
     }
-
     std::cout << "===============" << std::endl;
 }

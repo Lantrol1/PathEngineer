@@ -29,7 +29,6 @@ void RandomEvent::initialize(ResourceManager* resMgr, MapSystem* mapSys,
 }
 
 void RandomEvent::initializeProbabilities() {
-    // 基础事件概率（每回合）
     baseEventProbabilities = {
         {EventType::WEATHER_RAIN, 0.15f},
         {EventType::WEATHER_SNOW, 0.08f},
@@ -52,24 +51,16 @@ void RandomEvent::processTurn() {
         it->remainingTurns--;
 
         if (it->remainingTurns <= 0) {
-            // 事件结束
             onEventEnded(*it);
             it = activeEvents.erase(it);
         }
         else {
-            // 应用持续效果
             applyEventEffects(*it);
             ++it;
         }
     }
-
-    // 检查新事件
     checkEvents();
-
-    // 应用天气效果
     applyWeatherEffects();
-
-    // 检查环境条件
     checkEnvironmentalConditions();
 }
 
@@ -124,8 +115,6 @@ void RandomEvent::updateSeasonAndWeather() {
         else currentWeather = GameEnums::Weather::CLEAR;
         break;
     }
-
-    // 天气变化时触发回调
     if (oldWeather != currentWeather) {
         onWeatherChanged(currentSeason, currentWeather);
     }
@@ -611,67 +600,6 @@ std::vector<std::pair<int, int>> RandomEvent::findConstructionSites() const {
 
     return constructionSites;
 }
-/*
-void RandomEvent::triggerLandslide(int x, int y) {
-    GameEvent event(EventType::TERRAIN_HAZARD, EventSeverity::MAJOR, "山体滑坡", "");
-    event.description = "山体发生滑坡，对道路造成严重破坏";
-    event.budgetEffect = -500;
-    event.affectedCells.emplace_back(x, y);
-
-    activeEvents.push_back(event);
-    applyEventEffects(event);
-    onEventTriggered(event);
-}
-
-void RandomEvent::triggerFlood(int x, int y) {
-    GameEvent event(EventType::TERRAIN_HAZARD, EventSeverity::MODERATE, "洪水", "");
-    event.description = "洪水冲毁了部分设施";
-    event.budgetEffect = -300;
-    event.affectedCells.emplace_back(x, y);
-
-    activeEvents.push_back(event);
-    applyEventEffects(event);
-    onEventTriggered(event);
-}
-
-void RandomEvent::triggerAccident(int x, int y, int severity) {
-    GameEvent event(EventType::SAFETY_ACCIDENT, static_cast<EventSeverity>(severity), "施工事故", "");
-    event.affectedCells.emplace_back(x, y);
-
-    switch (severity) {
-    case 1:
-        event.description = "小型施工事故";
-        event.budgetEffect = -200;
-        break;
-    case 2:
-        event.description = "中等施工事故";
-        event.budgetEffect = -500;
-        event.workerEffect = -1;
-        break;
-    case 3:
-        event.description = "严重施工事故";
-        event.budgetEffect = -1000;
-        event.workerEffect = -2;
-        break;
-    }
-
-    activeEvents.push_back(event);
-    applyEventEffects(event);
-    onEventTriggered(event);
-}
-
-void RandomEvent::triggerTreasureDiscovery(int x, int y) {
-    GameEvent event(EventType::BONUS_TREASURE, EventSeverity::MODERATE, "发现宝藏", "");
-    event.description = "在施工过程中发现了隐藏的宝藏！";
-    event.budgetEffect = 1000;
-    event.isPositive = true;
-    event.affectedCells.emplace_back(x, y);
-
-    activeEvents.push_back(event);
-    applyEventEffects(event);
-    onEventTriggered(event);
-}
-*/
 void RandomEvent::adjustEventProbability(EventType type, float multiplier) {
     auto it = baseEventProbabilities.find(type);
     if (it != baseEventProbabilities.end()) {

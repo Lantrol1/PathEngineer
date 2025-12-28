@@ -75,7 +75,6 @@ public:
 
     // 位置验证
     bool isValidPosition(int x, int y) const;
-    bool isAdjacent(int x1, int y1, int x2, int y2) const;
 
     // 建设可行性检查
     bool canBuildAt(int x, int y, Constants::ConstructionType construction) const;

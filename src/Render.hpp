@@ -70,7 +70,7 @@ private:
     void drawTooltip(sf::RenderWindow& window);
 
     void drawGrid(sf::RenderWindow& window);
-    void drawCoordinates(sf::RenderWindow& window);
+    void drawCoordinates(sf::RenderWindow& window) const;
 
     // 工具方法
     sf::Color getCellColor(const Cell& cell) const;
@@ -98,8 +98,6 @@ public:
     // 状态更新
     void setHoveredCell(int x, int y);
     void setSelectedCell(int x, int y);
-    void toggleGrid() { showGrid = !showGrid; }
-    void toggleCoordinates() { showCoordinates = !showCoordinates; }
     void toggleWorkers() { showWorkers = !showWorkers; }
 
     // 资源管理
