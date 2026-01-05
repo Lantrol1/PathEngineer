@@ -103,7 +103,6 @@ public:
     // 路径检查
     bool isPathConnected() const;
     bool hasDirectConnection() const;
-    std::vector<sf::Vector2i> findPath() const;
 
     // 获取地形建设成本
     int getTerrainBuildCost(int x, int y, Constants::ConstructionType type) const;

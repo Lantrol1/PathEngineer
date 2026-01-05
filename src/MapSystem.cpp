@@ -56,15 +56,10 @@ Cell& MapSystem::getCell(int x, int y) {
     if (isValidPosition(x, y)) {
         return grid[y][x];
     }
-    throw std::out_of_range("Invalid cell position: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
 }
-
-
 bool MapSystem::canBuildAt(int x, int y, Constants::ConstructionType construction) const {
     if (!isValidPosition(x, y)) return false;
-
     const Cell& cell = grid[y][x];
-
     switch (construction) {
     case Constants::ConstructionType::BUILD_ROAD:
         return canPlaceRoad(x, y);
@@ -158,11 +153,6 @@ void MapSystem::setObstacle(int x, int y, Constants::ObstacleType obstacle) {
 void MapSystem::buildRoad(int x, int y) {
     if (canPlaceRoad(x, y)) {
         grid[y][x].hasRoad = true;
-        // 修路时会自动清除一些小型障碍物
-        if (grid[y][x].obstacle == Constants::ObstacleType::BOULDER ||
-            grid[y][x].obstacle == Constants::ObstacleType::FOREST) {
-            grid[y][x].obstacle = Constants::ObstacleType::NONE;
-        }
     }
 }
 
@@ -303,71 +293,5 @@ int MapSystem::getObstacleClearCost(int x, int y) const {
         return Constants::COST_CLEAR_FOREST;
     default:
         return 0;
-    }
-}
-
-std::string MapSystem::serialize() const {
-    // 简单的序列化实现
-    std::stringstream ss;
-    ss << startPoint.x << "," << startPoint.y << "|"
-        << endPoint.x << "," << endPoint.y << "|";
-
-    for (int y = 0; y < Constants::MAP_HEIGHT; ++y) {
-        for (int x = 0; x < Constants::MAP_WIDTH; ++x) {
-            const Cell& cell = grid[y][x];
-            ss << static_cast<int>(cell.terrain) << ","
-                << static_cast<int>(cell.obstacle) << ","
-                << cell.hasRoad << ","
-                << cell.hasBridge << ","
-                << cell.hasTunnel << ","
-                << cell.isReinforced << ";";
-        }
-    }
-
-    return ss.str();
-}
-
-void MapSystem::deserialize(const std::string& data) {
-    std::stringstream ss(data);
-    std::string token;
-
-    // 解析起点
-    std::getline(ss, token, '|');
-    size_t commaPos = token.find(',');
-    startPoint.x = std::stoi(token.substr(0, commaPos));
-    startPoint.y = std::stoi(token.substr(commaPos + 1));
-
-    // 解析终点
-    std::getline(ss, token, '|');
-    commaPos = token.find(',');
-    endPoint.x = std::stoi(token.substr(0, commaPos));
-    endPoint.y = std::stoi(token.substr(commaPos + 1));
-
-    // 标记起点和终点
-    getCell(startPoint.x, startPoint.y).isStartPoint = true;
-    getCell(endPoint.x, endPoint.y).isEndPoint = true;
-
-    // 解析单元格数据
-    for (int y = 0; y < Constants::MAP_HEIGHT; ++y) {
-        for (int x = 0; x < Constants::MAP_WIDTH; ++x) {
-            std::getline(ss, token, ';');
-            std::stringstream cellStream(token);
-            std::string cellToken;
-
-            std::vector<std::string> cellData;
-            while (std::getline(cellStream, cellToken, ',')) {
-                cellData.push_back(cellToken);
-            }
-
-            if (cellData.size() >= 6) {
-                Cell& cell = grid[y][x];
-                cell.terrain = static_cast<Constants::TerrainType>(std::stoi(cellData[0]));
-                cell.obstacle = static_cast<Constants::ObstacleType>(std::stoi(cellData[1]));
-                cell.hasRoad = std::stoi(cellData[2]);
-                cell.hasBridge = std::stoi(cellData[3]);
-                cell.hasTunnel = std::stoi(cellData[4]);
-                cell.isReinforced = std::stoi(cellData[5]);
-            }
-        }
     }
 }

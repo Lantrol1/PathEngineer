@@ -60,24 +60,6 @@ struct GameEvent {
         duration(1), remainingTurns(1), isActive(true), isPositive(false) {
     }
 };
-
-// 季节类型
-/*enum class Season {
-    SPRING,
-    SUMMER,
-    AUTUMN,
-    WINTER
-};
-
-// 天气类型
-enum class Weather {
-    CLEAR,
-    CLOUDY,
-    RAIN,
-    STORM,
-    SNOW
-};*/
-
 class RandomEvent {
 private:
     ResourceManager* resourceManager;
@@ -119,14 +101,10 @@ private:
 
     // 事件效果应用
     void applyWeatherEffects();
-    void applySafetyEffects();
     void checkEnvironmentalConditions();
     void applyEventEffects(const GameEvent& event);
 
     // 辅助方法
-    bool checkLandslideRisk(int x, int y) const;
-    bool checkFloodRisk(int x, int y) const;
-    bool checkSafetyRisk(int x, int y, int workers) const;
     std::vector<std::pair<int, int>> findVulnerableCells() const;
     std::vector<std::pair<int, int>> findConstructionSites() const;
 
@@ -142,34 +120,14 @@ public:
     // 事件检查
     void checkEvents();
     bool triggerEvent(EventType type, EventSeverity severity = EventSeverity::MODERATE);
-
-    // 特定事件触发
-    /*void triggerLandslide(int x, int y);
-    void triggerFlood(int x, int y);
-    void triggerAccident(int x, int y, int severity);
-    void triggerTreasureDiscovery(int x, int y);*/
-
-    // 概率调整
-    void adjustEventProbability(EventType type, float multiplier);
-    float getEventProbability(EventType type) const;
-
-    // 状态获取
     GameEnums::Season getCurrentSeason() const { return currentSeason; }
     GameEnums::Weather getCurrentWeather() const { return currentWeather; }
     const std::vector<GameEvent>& getActiveEvents() const { return activeEvents; }
     bool hasActiveEvents() const { return !activeEvents.empty(); }
-
-    // 风险评估
-    float getSafetyRiskAt(int x, int y) const;
-    float getEnvironmentalRiskAt(int x, int y) const;
     float getWeatherRisk() const;
-
-    // 回调设置
     void setEventTriggeredCallback(std::function<void(const GameEvent&)> callback);
     void setEventEndedCallback(std::function<void(const GameEvent&)> callback);
     void setWeatherChangedCallback(std::function<void(GameEnums::Season, GameEnums::Weather)> callback);
-
-    // 调试工具
     void printActiveEvents() const;
     void forceEvent(EventType type);
 };

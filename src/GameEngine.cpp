@@ -25,12 +25,13 @@ bool GameEngine::initialize() {
     std::cout << "初始化游戏引擎..." << std::endl;
 
     try {
+        currentState = GameState::MAIN_MENU;
+
         initializeSystems();
         setupCallbacks();
-
         gameRunning = true;
         gamePaused = false;
-        currentState = GameState::DEPLOYMENT;
+        
         currentTurn = 1;
 
         std::cout << "游戏引擎初始化完成" << std::endl;
@@ -147,7 +148,6 @@ void GameEngine::setupCallbacks() {
         std::cout << "输入消息: " << message << std::endl;
         });
 
-    std::cout << "所有回调设置完成" << std::endl;
 }
 
 void GameEngine::run() {
@@ -192,7 +192,7 @@ void GameEngine::handleEvents() {
             break;
 
         case sf::Event::LostFocus:
-            if (currentState == GameState::IN_GAME) {
+            if (currentState == GameState::DEPLOYMENT) {
                 pauseGame();
             }
             break;
@@ -232,24 +232,21 @@ void GameEngine::handleInput(const sf::Event& event) {
             }
             break;
 
+        case sf::Keyboard::Space:
+            if (currentState == GameState::MAIN_MENU) {
+                startGame();
+            }
+            break;
+
         case sf::Keyboard::Enter:
             if (currentState == GameState::DEPLOYMENT) {
                 std::cout << "Start!!" << std::endl;
                 startTurn();
-                //if (currentState == GameState::TURN_END) {
-                //endTurn();
-                //}
             }
             break;
 
         case sf::Keyboard::Escape:
-            if (currentState == GameState::IN_GAME) {
-                pauseGame();
-            }
-            else if (currentState == GameState::PAUSED) {
-                resumeGame();
-            }
-            else if (currentState == GameState::GAME_OVER) {
+            if (currentState == GameState::GAME_OVER) {
                 window.close();
             }
             break;
@@ -288,38 +285,17 @@ void GameEngine::handleInput(const sf::Event& event) {
     // 根据游戏状态进行更新
     switch (currentState) {
     case GameState::MAIN_MENU:
-        // 主菜单逻辑
         break;
 
     case GameState::IN_GAME:
-        // 游戏进行中逻辑
         inputHandler->update();
-
-        // 检查游戏条件
         checkGameConditions();
         break;
 
     case GameState::DEPLOYMENT:
-        // 部署阶段逻辑
+        inputHandler->update();
+        checkGameConditions();
         break;
-
-    case GameState::TURN_PROCESSING:
-        // 回合处理中逻辑
-        //processTurn();
-        break;
-
-    case GameState::TURN_END:
-        // 回合结束逻辑
-        break;
-
-    case GameState::GAME_OVER:
-        // 游戏结束逻辑
-        break;
-
-    case GameState::PAUSED:
-        // 暂停状态逻辑
-        break;
-
     default:
         break;
     }
@@ -327,25 +303,27 @@ void GameEngine::handleInput(const sf::Event& event) {
 
 void GameEngine::render() {
     window.clear(sf::Color::Black);
-
     if (Rrender) {
-        Rrender->draw(window);
+        switch (currentState) {
+        case GameState::MAIN_MENU:
+            Rrender->drawMenu(window);
+            break;
+        default:
+            Rrender->draw(window);
+            break;
+        }
     }
-
-    // 根据游戏状态渲染不同的UI
     switch (currentState) {
     case GameState::PAUSED:
-        // 渲染暂停菜单
     {
         sf::Text pauseText("Paused - press P to continue.", Rrender->Render::Getfont(), 24);
-        pauseText.setPosition(Constants::WINDOW_WIDTH / 2 - 100, Constants::WINDOW_HEIGHT / 2);
+        pauseText.setPosition(Constants::WINDOW_WIDTH / 2 - 100, static_cast<float>(Constants::WINDOW_HEIGHT) / 2);
         pauseText.setFillColor(sf::Color::White);
         window.draw(pauseText);
     }
     break;
 
     case GameState::GAME_OVER:
-        // 渲染游戏结束画面
     {
         sf::RectangleShape overlay(sf::Vector2f(Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT));
         overlay.setFillColor(sf::Color(0, 0, 0, 180));
@@ -367,7 +345,6 @@ void GameEngine::render() {
         window.draw(restartText);
     }
     break;
-
     default:
         break;
     }
@@ -375,14 +352,13 @@ void GameEngine::render() {
     window.display();
 }
 
-void GameEngine::startGame() {
+void GameEngine::startGame(){
     std::cout << "开始新游戏" << std::endl;
     currentState = GameState::DEPLOYMENT;
     currentTurn = 1;
     gameWon = false;
     gameResultMessage = "";
 
-    // 重置所有系统
     mapSystem->initialize();
     resourceManager->initialize();
     constructionSystem->initialize(mapSystem.get(), resourceManager.get(), randomEvent.get());
@@ -399,7 +375,7 @@ void GameEngine::endGame(bool won, const std::string& message) {
 }
 
 void GameEngine::pauseGame() {
-    if (!gamePaused && currentState == GameState::IN_GAME) {
+    if (!gamePaused && currentState == GameState::DEPLOYMENT) {
         gamePaused = true;
         currentState = GameState::PAUSED;
         std::cout << "游戏暂停" << std::endl;
@@ -409,7 +385,7 @@ void GameEngine::pauseGame() {
 void GameEngine::resumeGame() {
     if (gamePaused) {
         gamePaused = false;
-        currentState = GameState::IN_GAME;
+        currentState = GameState::DEPLOYMENT;
         std::cout << "游戏继续" << std::endl;
     }
 }
@@ -427,8 +403,6 @@ void GameEngine::startTurn() {
     std::cout << "=== 回合 " << currentTurn << " 开始 ===" << std::endl;
 
     currentState = GameState::TURN_PROCESSING;
-
-    // 开始回合处理
     resourceManager->startTurn();
     randomEvent->processTurn();
     GameEngine::processTurn();
@@ -480,8 +454,6 @@ void GameEngine::checkGameConditions() {
         endGame(true, "Complete!");
         return;
     }
-
-    // 检查环境严重破坏
     if (resourceManager->isEnvironmentCritical()) {
         endGame(false, "Gameover(E)");
         return;

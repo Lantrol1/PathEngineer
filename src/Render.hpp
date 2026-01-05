@@ -89,7 +89,7 @@ public:
 
     // 主渲染方法
     void draw(sf::RenderWindow& window);
-
+    void drawMenu(sf::RenderWindow& window);
     // 视图控制
     void setViewCenter(const sf::Vector2f& center);
     void zoom(float factor);
@@ -102,7 +102,6 @@ public:
 
     // 资源管理
     bool loadFont(const std::string& fontPath);
-    bool loadTextures();
     const sf::Font& Getfont() const { return font; };
     // 调试工具
     void printRenderState() const;

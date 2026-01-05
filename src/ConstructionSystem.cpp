@@ -142,15 +142,9 @@ void ConstructionSystem::processTurn() {
                 default:
                     break;
                 }
-
                 task.addWorkPoints(workPoints);
                 if (workPoints > 0) {
                     onTaskProgress(task);
-                }
-                // 检查施工安全（如果有随机事件系统）
-                if (randomEvent && task.assignedWorkers > 0) {
-                    // 这里可以添加安全检查逻辑
-                    // 例如：randomEvent->checkConstructionSafety(task.x, task.y, task.assignedWorkers);
                 }
             }
         }

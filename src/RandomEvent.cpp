@@ -11,8 +11,6 @@ RandomEvent::RandomEvent()
     rng(std::random_device{}()),
     currentSeason(GameEnums::Season::SPRING), currentWeather(GameEnums::Weather::CLEAR),
     seasonTurnCounter(0) {
-
-    // 初始化回调为空函数
     onEventTriggered = [](const GameEvent&) {};
     onEventEnded = [](const GameEvent&) {};
     onWeatherChanged = [](GameEnums::Season, GameEnums::Weather) {};
@@ -43,10 +41,7 @@ void RandomEvent::initializeProbabilities() {
 }
 
 void RandomEvent::processTurn() {
-    // 更新季节和天气
     updateSeasonAndWeather();
-
-    // 处理活跃事件的持续效果
     for (auto it = activeEvents.begin(); it != activeEvents.end(); ) {
         it->remainingTurns--;
 
@@ -67,11 +62,9 @@ void RandomEvent::processTurn() {
 void RandomEvent::updateSeasonAndWeather() {
     seasonTurnCounter++;
 
-    // 每10回合更换季节（简化实现）
+    // 每10回合更换季节
     GameEnums::Season oldSeason = currentSeason;
     currentSeason = getSeasonByTurn(seasonTurnCounter / 10);
-
-    // 季节变化时触发回调
     if (oldSeason != currentSeason) {
         std::cout << "季节变化: ";
         switch (currentSeason) {
@@ -82,14 +75,11 @@ void RandomEvent::updateSeasonAndWeather() {
         }
         std::cout << std::endl;
     }
-
-    // 天气变化（基于季节和随机性）
     std::uniform_real_distribution<float> weatherDist(0.0f, 1.0f);
     float weatherRoll = weatherDist(rng);
-
     GameEnums::Weather oldWeather = currentWeather;
 
-    // 基于季节的天气概率
+    // 天气概率
     switch (currentSeason) {
     case GameEnums::Season::SPRING:
         if (weatherRoll < 0.4f) currentWeather = GameEnums::Weather::RAIN;
@@ -147,16 +137,12 @@ float RandomEvent::getSeasonalModifier() const {
     default: return 1.0f;
     }
 }
-
 void RandomEvent::checkEvents() {
     if (!resourceManager || !mapSystem) return;
-
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
     // 检查每种类型的事件
     for (const auto& [eventType, baseProbability] : baseEventProbabilities) {
         float actualProbability = baseProbability;
-
         // 根据游戏状态调整概率
         switch (eventType) {
         case EventType::SAFETY_ACCIDENT:
@@ -171,19 +157,15 @@ void RandomEvent::checkEvents() {
             // 检查山体滑坡风险
             actualProbability *= getWeatherRisk();
             break;
-
         case EventType::ENVIRONMENT_PENALTY:
-            // 环境分数低时更容易被罚款
+            // 环境分数低时容易被罚款
             if (resourceManager->getEnvironmentScore() < 50) {
                 actualProbability *= 2.0f;
             }
             break;
-
         default:
             break;
         }
-
-        // 触发事件检查
         if (dist(rng) < actualProbability) {
             triggerEvent(eventType);
         }
@@ -191,8 +173,7 @@ void RandomEvent::checkEvents() {
 }
 
 bool RandomEvent::triggerEvent(EventType type, EventSeverity severity) {
-    GameEvent event(EventType::WEATHER_RAIN, EventSeverity::MINOR, "", ""); // 临时初始化
-
+    GameEvent event(EventType::WEATHER_RAIN, EventSeverity::MINOR, "", ""); 
     switch (type) {
     case EventType::WEATHER_RAIN:
     case EventType::WEATHER_SNOW:
@@ -224,13 +205,8 @@ bool RandomEvent::triggerEvent(EventType type, EventSeverity severity) {
 
     event.severity = severity;
     activeEvents.push_back(event);
-
-    // 应用事件效果
     applyEventEffects(event);
-
-    // 触发回调
     onEventTriggered(event);
-
     std::cout << "事件触发: " << event.title << " - " << event.description << std::endl;
 
     return true;
@@ -245,7 +221,7 @@ GameEvent RandomEvent::generateWeatherEvent() {
         event.title = "Continuous rainfall";
         event.description = "Continuous rainfall has slowed down the construction progress and increased labor costs.";
         event.budgetEffect = -100;
-        event.environmentEffect = 5; // 雨水对环境有轻微正面影响
+        event.environmentEffect = 5;
         event.duration = 3;
         break;
 
@@ -280,7 +256,7 @@ GameEvent RandomEvent::generateWeatherEvent() {
 }
 
 GameEvent RandomEvent::generateSafetyEvent() {
-    GameEvent event(EventType::SAFETY_ACCIDENT, EventSeverity::MODERATE, "施工事故", "");
+    GameEvent event(EventType::SAFETY_ACCIDENT, EventSeverity::MODERATE, "Accident", "");
 
     std::uniform_int_distribution<int> severityDist(1, 3);
     int severityRoll = severityDist(rng);
@@ -295,29 +271,27 @@ GameEvent RandomEvent::generateSafetyEvent() {
     }
 
     switch (severityRoll) {
-    case 1: // 轻微事故
+    case 1: 
         event.description = "Minor construction accidents resulting in minor losses.";
         event.budgetEffect = -200;
-        event.workerEffect = -1; // 临时减少工人
+        event.workerEffect = -1; 
         event.severity = EventSeverity::MINOR;
         break;
 
-    case 2: // 中等事故
+    case 2:
         event.description = "Moderate construction accident, compensation needs to be paid.";
         event.budgetEffect = -500;
         event.workerEffect = -2;
         event.severity = EventSeverity::MODERATE;
         break;
 
-    case 3: // 严重事故
+    case 3:
         event.description = "Serious construction accidents resulting in significant losses and casualties.";
         event.budgetEffect = -1000;
-        event.workerEffect = -3; // 永久减少工人
+        event.workerEffect = -3;
         event.severity = EventSeverity::MAJOR;
         break;
     }
-
-    // 检查是否有监管不严的情况
     if (!constructionSites.empty()) {
         for (const auto& site : constructionSites) {
             if (mapSystem->getAssignedWorkers(site.first, site.second) < 2) {
@@ -382,45 +356,34 @@ GameEvent RandomEvent::generateBonusEvent() {
 
 GameEvent RandomEvent::generateTerrainHazard() {
     GameEvent event(EventType::TERRAIN_HAZARD, EventSeverity::MODERATE, "Terrain disasters", "");
-
-    // 查找易受灾害的单元格
     auto vulnerableCells = findVulnerableCells();
-
     if (vulnerableCells.empty()) {
-        // 没有易受灾单元格，生成一般灾害
         event.description = "Minor terrain changes have affected construction";
         event.budgetEffect = -100;
         return event;
     }
 
     std::uniform_int_distribution<int> cellDist(0, vulnerableCells.size() - 1);
-    auto affectedCell = vulnerableCells[cellDist(rng)];
+    auto& affectedCell = vulnerableCells[cellDist(rng)];
     event.affectedCells.push_back(affectedCell);
-
     const Cell& cell = mapSystem->getCell(affectedCell.first, affectedCell.second);
-
     if (cell.terrain == Constants::TerrainType::MOUNTAIN && !cell.isReinforced) {
-        // 山体滑坡
         event.title = "landslide";
         event.description = "Unreinforced mountain landslide causing damage to roads";
         event.budgetEffect = -400;
         event.severity = EventSeverity::MAJOR;
-
-        // 增加恶劣天气下的概率
         if (currentWeather == GameEnums::Weather::RAIN || currentWeather == GameEnums::Weather::STORM) {
             event.budgetEffect *= 2;
             event.description += " (Severe weather exacerbates disasters)";
         }
     }
     else if (cell.terrain == Constants::TerrainType::RIVER) {
-        // 洪水
         event.title = "Flood impact";
         event.description = "The rising water level of the river has washed away some facilities.";
         event.budgetEffect = -300;
         event.severity = EventSeverity::MODERATE;
     }
     else {
-        // 一般地形灾害
         event.description = "Unstable terrain leads to construction delays.";
         event.budgetEffect = -150;
     }
@@ -441,22 +404,13 @@ void RandomEvent::applyWeatherEffects() {
     }
 }
 
-void RandomEvent::applySafetyEffects() {
-    // 安全检查在generateSafetyEvent中已处理
-}
-
 void RandomEvent::checkEnvironmentalConditions() {
     if (!resourceManager || !constructionSystem) return;
-
-    // 检查环境破坏情况
     int environmentScore = resourceManager->getEnvironmentScore();
-
     if (environmentScore < 30 && !resourceManager->isEnvironmentCritical()) {
-        // 环境严重破坏
         triggerEvent(EventType::ENVIRONMENT_PENALTY, EventSeverity::MAJOR);
     }
     else if (environmentScore < 50) {
-        // 环境中等破坏，有一定概率触发罚款
         std::uniform_real_distribution<float> dist(0.0f, 1.0f);
         if (dist(rng) < 0.3f) {
             triggerEvent(EventType::ENVIRONMENT_PENALTY, EventSeverity::MODERATE);
@@ -466,8 +420,6 @@ void RandomEvent::checkEnvironmentalConditions() {
 
 void RandomEvent::applyEventEffects(const GameEvent& event) {
     if (!resourceManager) return;
-
-    // 应用预算效果
     if (event.budgetEffect != 0) {
         if (event.budgetEffect > 0) {
             resourceManager->addBudget(event.budgetEffect);
@@ -476,8 +428,6 @@ void RandomEvent::applyEventEffects(const GameEvent& event) {
             resourceManager->spendBudget(-event.budgetEffect);
         }
     }
-
-    // 应用工人效果
     if (event.workerEffect != 0) {
         if (event.workerEffect > 0) {
             resourceManager->increaseWorkers(event.workerEffect);
@@ -491,72 +441,6 @@ void RandomEvent::applyEventEffects(const GameEvent& event) {
     if (event.environmentEffect != 0) {
         resourceManager->updateEnvironment(event.environmentEffect);
     }
-
-    // 应用特定位置效果
-    for (const auto& cell : event.affectedCells) {
-        // 这里可以添加对特定单元格的影响
-        // 例如：破坏道路、桥梁等
-    }
-}
-
-bool RandomEvent::checkLandslideRisk(int x, int y) const {
-    if (!mapSystem) return false;
-
-    const Cell& cell = mapSystem->getCell(x, y);
-
-    // 只有未加固的山地有滑坡风险
-    if (cell.terrain == Constants::TerrainType::MOUNTAIN && !cell.isReinforced) {
-        // 雨雪天气增加风险
-        float risk = 0.1f; // 基础风险
-
-        if (currentWeather == GameEnums::Weather::RAIN) risk += 0.3f;
-        if (currentWeather == GameEnums::Weather::STORM) risk += 0.5f;
-
-        std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-        float mm = dist(rng);
-        return mm < risk;
-    }
-
-    return false;
-}
-
-bool RandomEvent::checkFloodRisk(int x, int y) const {
-    if (!mapSystem) return false;
-
-    const Cell& cell = mapSystem->getCell(x, y);
-
-    // 河流和邻近单元格有洪水风险
-    if (cell.terrain == Constants::TerrainType::RIVER) {
-        float risk = 0.05f; // 基础风险
-
-        if (currentWeather == GameEnums::Weather::RAIN) risk += 0.2f;
-        if (currentWeather == GameEnums::Weather::STORM) risk += 0.4f;
-
-        std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-        return dist(rng) < risk;
-    }
-
-    return false;
-}
-
-bool RandomEvent::checkSafetyRisk(int x, int y, int workers) const {
-    if (workers <= 0) return false;
-
-    // 劳动力过少增加安全风险（监管不严）
-    if (workers < 2) {
-        std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-        return dist(rng) < 0.4f; // 40%风险
-    }
-
-    // 高风险地形增加安全风险
-    const Cell& cell = mapSystem->getCell(x, y);
-    float risk = 0.05f; // 基础风险
-
-    if (cell.terrain == Constants::TerrainType::MOUNTAIN) risk += 0.1f;
-    if (cell.obstacle == Constants::ObstacleType::CLIFF) risk += 0.15f;
-
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-    return dist(rng) < risk;
 }
 
 std::vector<std::pair<int, int>> RandomEvent::findVulnerableCells() const {
@@ -569,13 +453,9 @@ std::vector<std::pair<int, int>> RandomEvent::findVulnerableCells() const {
     for (int y = 0; y < Constants::MAP_HEIGHT; ++y) {
         for (int x = 0; x < Constants::MAP_WIDTH; ++x) {
             const Cell& cell = grid[y][x];
-
-            // 检查山体滑坡风险
             if (cell.terrain == Constants::TerrainType::MOUNTAIN && !cell.isReinforced) {
                 vulnerableCells.emplace_back(x, y);
             }
-
-            // 检查洪水风险
             if (cell.terrain == Constants::TerrainType::RIVER) {
                 vulnerableCells.emplace_back(x, y);
             }
@@ -600,61 +480,6 @@ std::vector<std::pair<int, int>> RandomEvent::findConstructionSites() const {
 
     return constructionSites;
 }
-void RandomEvent::adjustEventProbability(EventType type, float multiplier) {
-    auto it = baseEventProbabilities.find(type);
-    if (it != baseEventProbabilities.end()) {
-        it->second *= multiplier;
-
-        // 限制概率在合理范围内
-        if (it->second > 0.8f) it->second = 0.8f;
-        if (it->second < 0.01f) it->second = 0.01f;
-    }
-}
-
-float RandomEvent::getEventProbability(EventType type) const {
-    auto it = baseEventProbabilities.find(type);
-    if (it != baseEventProbabilities.end()) {
-        return it->second;
-    }
-    return 0.0f;
-}
-
-float RandomEvent::getSafetyRiskAt(int x, int y) const {
-    if (!mapSystem) return 0.0f;
-
-    int workers = mapSystem->getAssignedWorkers(x, y);
-    float risk = 0.0f;
-
-    // 基础风险
-    if (workers > 0) {
-        risk = 0.05f;
-
-        // 劳动力过少增加风险
-        if (workers < 2) risk += 0.3f;
-
-        // 地形风险
-        const Cell& cell = mapSystem->getCell(x, y);
-        if (cell.terrain == Constants::TerrainType::MOUNTAIN) risk += 0.2f;
-        if (cell.obstacle == Constants::ObstacleType::CLIFF) risk += 0.25f;
-    }
-
-    return std::min(risk, 1.0f);
-}
-
-float RandomEvent::getEnvironmentalRiskAt(int x, int y) const {
-    if (!mapSystem) return 0.0f;
-
-    const Cell& cell = mapSystem->getCell(x, y);
-    float risk = 0.0f;
-
-    // 破坏森林增加环境风险
-    if (cell.obstacle == Constants::ObstacleType::FOREST) {
-        risk = 0.4f;
-    }
-
-    return risk;
-}
-
 float RandomEvent::getWeatherRisk() const {
     switch (currentWeather) {
     case GameEnums::Weather::STORM: return 2.0f;

@@ -54,7 +54,6 @@ private:
     // 键盘状态
     std::map<sf::Keyboard::Key, bool> keyStates;
     std::map<sf::Keyboard::Key, bool> prevKeyStates;
-
     // 回调函数
     std::function<void(int, int, Constants::ConstructionType)> onConstructionSelected;
     std::function<void(int, int)> onCellHovered;
@@ -68,7 +67,6 @@ private:
     void handleKeyPress(const sf::Event::KeyEvent& event);
      
     // 模式特定的处理
-    void handleNormalMode(int x, int y);
     void handleConstructionMode(int x, int y);
     void handleWorkerAssignmentMode(int x, int y);
     void handleCellInspectionMode(int x, int y);

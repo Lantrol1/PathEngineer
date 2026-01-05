@@ -8,13 +8,10 @@ InputHandler::InputHandler()
     resourceManager(nullptr), gameEngine(nullptr),
     currentMode(InputMode::NORMAL),
     selectedConstruction(Constants::ConstructionType::NONE) {
-
-    // 初始化回调为空函数
     onConstructionSelected = [](int, int, Constants::ConstructionType) {};
     onCellHovered = [](int, int) {};
     onCellSelected = [](int, int) {};
     onInputMessage = [](const std::string&) {};
-
 }
 
 void InputHandler::initialize(ConstructionSystem* constSys, MapSystem* mapSys,
@@ -26,9 +23,7 @@ void InputHandler::initialize(ConstructionSystem* constSys, MapSystem* mapSys,
 }
 
 void InputHandler::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
-    // 更新之前的键盘状态
     prevKeyStates = keyStates;
-
     switch (event.type) {
     case sf::Event::MouseMoved:
         handleMouseMove(event.mouseMove, window);
@@ -61,52 +56,31 @@ void InputHandler::handleEvent(const sf::Event& event, sf::RenderWindow& window)
         break;
     }
 }
-
 void InputHandler::update() {
-    // 每帧更新逻辑
-    // 重置点击状态（这些只在事件触发时有效）
     mouseState.leftClicked = false;
     mouseState.rightClicked = false;
 }
 
 void InputHandler::handleMouseMove(const sf::Event::MouseMoveEvent& event, sf::RenderWindow& window) {
     mouseState.screenPosition = sf::Vector2i(event.x, event.y);
-
-    // 转换为网格坐标
     sf::Vector2f worldPos = window.mapPixelToCoords(mouseState.screenPosition);
     sf::Vector2i newGridPos = getCellAtPosition(worldPos);
-
-    // 检查网格位置是否变化
     if (newGridPos != mouseState.gridPosition) {
         mouseState.gridPosition = newGridPos;
-
-        // 触发悬停回调
         if (mouseState.gridPosition.x != -1 && mouseState.gridPosition.y != -1) {
             onCellHovered(mouseState.gridPosition.x, mouseState.gridPosition.y);
         }
-    }
-
-    // 拖拽检测
-    if (mouseState.leftPressed && lastGridPosition != sf::Vector2i(-1, -1)) {
-        mouseState.isDragging = true;
-    }
-    else {
-        mouseState.isDragging = false;
-        lastGridPosition = mouseState.gridPosition;
     }
 }
 
 void InputHandler::handleMouseClick(const sf::Event::MouseButtonEvent& event, sf::RenderWindow& window) {
     sf::Vector2f worldPos = window.mapPixelToCoords(sf::Vector2i(event.x, event.y));
     sf::Vector2i gridPos = getCellAtPosition(worldPos);
-
     if (gridPos.x == -1 || gridPos.y == -1) {
-        return; // 点击在网格外
+        return;
     }
-
     if (event.button == sf::Mouse::Left) {
         mouseState.leftClicked = true;
-
         switch (currentMode) {
         case InputMode::NORMAL:
             handleCellInspectionMode(gridPos.x, gridPos.y);
@@ -119,21 +93,12 @@ void InputHandler::handleMouseClick(const sf::Event::MouseButtonEvent& event, sf
         case InputMode::WORKER_ASSIGNMENT:
             handleWorkerAssignmentMode(gridPos.x, gridPos.y);
             break;
-
         }
         onCellSelected(gridPos.x, gridPos.y);
-    }
-    else if (event.button == sf::Mouse::Right) {
-        mouseState.rightClicked = true;
-        if (currentMode != InputMode::NORMAL) {
-            setInputMode(InputMode::NORMAL);
-            onInputMessage("取消当前操作");
-        }
     }
 }
 
 void InputHandler::handleKeyPress(const sf::Event::KeyEvent& event) {
-    // 处理快捷键
     switch (event.code) {
     case sf::Keyboard::Escape:
         setInputMode(InputMode::NORMAL);
@@ -196,15 +161,11 @@ void InputHandler::handleWorkerAssignmentMode(int x, int y) {
 }
 
 void InputHandler::handleCellInspectionMode(int x, int y) {
-    // 详细检查单元格信息
     if (mapSystem) {
         const Cell& cell = mapSystem->getCell(x, y);
-
         std::stringstream info;
         info << "=== 单元格详情 ===\n";
         info << "位置: (" << x << ", " << y << ")\n";
-
-        // 地形
         info << "地形: ";
         switch (cell.terrain) {
         case Constants::TerrainType::PLAIN: info << "平原"; break;
@@ -246,7 +207,6 @@ void InputHandler::handleCellInspectionMode(int x, int y) {
                 info << "工人: " << task->assignedWorkers << "\n";
             }
         }
-
         onInputMessage(info.str());
     }
 }
@@ -259,27 +219,20 @@ bool InputHandler::attemptConstruction(int x, int y) {
 
 bool InputHandler::attemptWorkerAssignment(int x, int y, int count) {
     if (!constructionSystem || !resourceManager) return false;
-
-    // 检查是否有可用工人
     if (resourceManager->getAvailableWorkers() < count) {
         onInputMessage("可用工人不足");
         return false;
     }
-
-    // 检查是否有建设任务
     if (!constructionSystem->hasActiveTask(x, y)) {
         onInputMessage("该位置没有建设任务");
         return false;
     }
-
-    // 分配工人
     if (constructionSystem->assignWorkersToTask(x, y, count)) {
         std::stringstream msg;
         msg << "分配 " << count << " 名工人到 (" << x << ", " << y << ")";
         onInputMessage(msg.str());
         return true;
     }
-
     return false;
 }
 
@@ -294,7 +247,6 @@ void InputHandler::setInputMode(InputMode mode) {
 void InputHandler::setConstructionType(Constants::ConstructionType type) {
     selectedConstruction = type;
     currentMode = InputMode::CONSTRUCTION;
-
     std::stringstream msg;
     msg << "建设模式: " << getConstructionName(type);
     onInputMessage(msg.str());
